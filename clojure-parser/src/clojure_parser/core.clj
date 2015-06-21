@@ -2,6 +2,6 @@
   (:gen-class))
 
 (defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+  "Clojure parser that returns an AST of the clojure code passed to it."
+  [path]
+  (seq (slurp path)))
