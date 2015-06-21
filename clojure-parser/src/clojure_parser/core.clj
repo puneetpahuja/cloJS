@@ -4,4 +4,11 @@
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
   [path]
-  (seq (slurp path)))
+  (loop [node [""] 
+         code (slurp path)
+         previous-character ""] 
+    ;;; If code is empty, return node
+    (if (empty? code) 
+      node
+      ;;;Else if open bracket, 
+      (recur (assoc node (conj (first node) (first code)))))))
