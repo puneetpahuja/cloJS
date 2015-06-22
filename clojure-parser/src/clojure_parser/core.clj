@@ -6,14 +6,10 @@
   ([path]
    (-main [] [] (slurp path)))
   ([tree node code]
-     (conj tree (-main node code)))
-  ([node code]
    (if (empty? code)
      (for [x node] (println x))
-     (if (= \( (first code))
-       (-main node [] (rest code))
-       (if (= \) (first code))
-         node
-         (if (= \newline (first code))
-           (-main node (rest code))
-           (-main (conj node (first code)) (rest code))))))))
+     (conj tree (if (= \( (first code))
+                  (-main tree [] (rest code))
+                  (if (= \) (first code))
+                    node
+                    (-main tree (conj node (first code)) (rest code)))
