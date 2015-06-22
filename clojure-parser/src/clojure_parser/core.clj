@@ -11,6 +11,9 @@
     (if (empty? code) 
       node
       ;;;Else if open bracket, 
-      (recur (assoc node 0 (str (first node) (first code)))
-             (rest code)
-             (first code)))))
+      (if (every? true? '((= \( (first code))
+                          (= \\ (first code))
+                          (= \' (first code))))
+        (recur (assoc node 0 (str (first node) (first code)))
+               (rest code)
+               (first code)))))
