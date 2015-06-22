@@ -5,14 +5,15 @@
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
    (-main [] [] (slurp path)))
-  ([tr nd cd]
-   (loop [tree tr
-          node nd
-          code cd]
-     (if (empty? code)
-       (for [x tree] (println x))
-       (if (= \( (first code))
-         (recur [] (conj node tree) (rest code))
-         (if (= \) (first code))
-           (recur (conj tree node) [] (rest code))
-           (recur tree (conj node (first code)) (rest code))))))))
+  ([tree node code]
+     (conj tree (-main node code)))
+  ([node code]
+   (if (empty? code)
+     (for [x node] (println x))
+     (if (= \( (first code))
+       (-main node [] (rest code))
+       (if (= \) (first code))
+         node
+         (if (= \newline (first code))
+           (-main node (rest code))
+           (-main (conj node (first code)) (rest code))))))))
