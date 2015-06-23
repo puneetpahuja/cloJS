@@ -1,16 +1,17 @@
 (ns clojure-parser.core
   (:gen-class))
 
-(defn parse-arguments [cd]
-  (if (= \[ (first cd))
-    (loop [code cd
-           arguments [""]]
-      (if (= \] (first code))
-        [arguments (rest code)]
-        (do
-          (println "args: " arguments)
-          (recur (rest code) [(str (get arguments 0) (first code))]))))
-    [nil code]))
+(defn parse-word [code]
+  (let [word (re-find #"^\w+" code)]
+    (if (nil? word)
+      [nil code]
+      [word (apply str (drop (count word) code))])))
+
+(defn parse-keyword [code]
+  (let [keyword (re-find #"^:\w+" code)]
+    (if (nil? keyword)
+      [nil code]
+      [keyword (apply str (drop (count keyword) code))])))
 
 (defn parse-space [code]
   (if (= \space (first code))
