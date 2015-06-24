@@ -1,6 +1,12 @@
 (ns clojure-parser.core
   (:gen-class))
 
+(defn parse-string [code]
+  (let [string (re-find #"^\.*\\\"(.*)\\\".*" code)]
+    (if (nil? string)
+      [nil code]
+      [string (apply str (drop (count string) code))])))
+
 (defn parse-word [code]
   (let [word (re-find #"^\w+" code)]
     (if (nil? word)
