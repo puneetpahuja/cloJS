@@ -1,28 +1,38 @@
 (ns clojure-parser.core
   (:gen-class))
 
+(defn parse-operator [code]
+  (let [operator (str (first code) (first (next code)))]
+    (cond
+      (= "+ " operator) ["+" (apply str (rest (rest code)))]
+      (= "- " operator) ["-" (apply str (rest (rest code)))]
+      (= "* " operator) ["*" (apply str (rest (rest code)))]
+      (= "/ " operator) ["/" (apply str (rest (rest code)))]
+      :else nil )))
+
 (defn parse-string [code]
-  (let [string (re-find #"^\.*\\\"(.*)\\\".*" code)]
-    (if (nil? string)
-      [nil code]
-      [string (apply str (drop (count string) code))])))
+  (let [string (last (re-find #"^\"([^\"]*)\"" code))]
+    (if (nil? string) 
+      nil
+      [string (apply str (drop (+ 2 (count string)) code))])))
 
 (defn parse-word [code]
   (let [word (re-find #"^\w+" code)]
     (if (nil? word)
-      [nil code]
+      nil
       [word (apply str (drop (count word) code))])))
 
 (defn parse-keyword [code]
   (let [keyword (re-find #"^:\w+" code)]
     (if (nil? keyword)
-      [nil code]
+      nil
       [keyword (apply str (drop (count keyword) code))])))
 
 (defn parse-space [code]
-  (if (= \space (first code))
-    [\space (apply str (rest code))]
-    [nil code]))
+  (let [space (re-find #"^\s+" code)]
+    (if (nil? space)
+      nil
+      [space  (apply str (drop (count space) code))])))
 
 (defn parse [exp cd]
   (loop [expression exp code cd]
@@ -30,7 +40,6 @@
       expression
       (recur {:node (str (:node expression) (first code))} 
              (apply str (rest code))))))
-
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
