@@ -16,11 +16,11 @@
       nil
       [string (apply str (drop (+ 2 (count string)) code))])))
 
-(defn parse-word [code]
-  (let [word (re-find #"^\w+" code)]
-    (if (nil? word)
+(defn parse-identifier [code]
+  (let [identifier (re-find #"^\w+" code)]
+    (if (nil? identifier)
       nil
-      [word (apply str (drop (count word) code))])))
+      [word (apply str (drop (count identifier) code))])))
 
 (defn parse-keyword [code]
   (let [keyword (re-find #"^:\w+" code)]
@@ -34,13 +34,6 @@
       nil
       [space  (apply str (drop (count space) code))])))
 
-(defn parse [exp cd]
-  (loop [expression exp code cd]
-    (if (empty? code) 
-      expression
-      (recur {:node (str (:node expression) (first code))} 
-             (apply str (rest code))))))
-
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
@@ -49,3 +42,13 @@
    (if (empty? code)
      tree
      (conj tree (parse node code)))))
+
+(defn parse [exp cd]
+  (loop [expression exp code cd]
+    (if (empty? code) 
+      expression
+      (recur {:node (str (:node expression) (first code))} 
+             (apply str (rest code))))))
+
+(defn extract [element code]
+  (apply str (drop (count space) code)))
