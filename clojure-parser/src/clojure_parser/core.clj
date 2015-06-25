@@ -1,6 +1,9 @@
 (ns clojure-parser.core
   (:gen-class))
 
+(defn not-nil? [element]
+  (not (nil? element)))
+
 (defn extract [element code]
   (apply str (drop (count element) code)))
 
@@ -42,26 +45,28 @@
       (nil? boolean) nil
       (= "nil" reserved-keyword) ["nil" (extract reserved-keyword code)]
       (= "atom" reserved-keyword) ["atom" (extract reserved-keyword code)] 
-      (= "keyword" reserved-keyword) ["keyword" (extract reserved-keyword)]
-      (= "symbol" reserved-keyword) ["symbol" (extract reserved-keyword)]
-      (= "name" reserved-keyword) ["name" (extract reserved-keyword)]
-      (= "intern" reserved-keyword) ["intern" (extract reserved-keyword)]
-      (= "namespace" reserved-keyword) ["namespace" (extract  reserved-keyword)]
-      (= "keyword?" reserved-keyword) ["keyword?" (extract  reserved-keyword)]
+      (= "keyword" reserved-keyword) ["keyword" (extract reserved-keyword code)]
+      (= "symbol" reserved-keyword) ["symbol" (extract reserved-keyword code)]
+      (= "name" reserved-keyword) ["name" (extract reserved-keyword code)]
+      (= "intern" reserved-keyword) ["intern" (extract reserved-keyword code)]
+      (= "namespace" reserved-keyword) ["namespace" (extract reserved-keyword code)]
+      (= "keyword?" reserved-keyword) ["keyword?" (extract reserved-keyword code)]
+      (= "for" reserved-keyword) ["for" (extract reserved-keyword code)]
       :else nil)))
 
 (defn parse-operator [code]
-  (let [operator (str (first code) (first (next code)))]
+  (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
     (cond
       (= "+ " operator) ["+" (apply str (rest (rest code)))]
       (= "- " operator) ["-" (apply str (rest (rest code)))]
       (= "* " operator) ["*" (apply str (rest (rest code)))]
       (= "/ " operator) ["/" (apply str (rest (rest code)))]
       (= "= " operator) ["=" (apply str (rest (rest code)))]
-      (= "> " operator) ["=" (apply str (rest (rest code)))]
-      (= "< " operator) ["=" (apply str (rest (rest code)))]
-      (= ">= " operator) ["=" (apply str (rest (rest code)))]
-      (= "<= " operator) ["=" (apply str (rest (rest code)))]
+      (= "== " operator) ["==" (apply str (rest (rest code)))]
+      (= "> " operator) [">" (apply str (rest (rest code)))]
+      (= "< " operator) ["<" (apply str (rest (rest code)))]
+      (= ">= " operator) [">=" (apply str (rest (rest code)))]
+      (= "<= " operator) ["<=" (apply str (rest (rest code)))]
       :else nil )))
 
 (defn parse-string [code]
