@@ -5,7 +5,7 @@
   (apply str (drop (count element) code)))
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^\w+" code)]
+  (let [identifier (re-find #"^\w+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -40,6 +40,14 @@
   (let [reserved-keyword (first (parse-identifier code))]
     (cond
       (nil? boolean) nil
+      (= "nil" reserved-keyword) ["nil" (extract reserved-keyword code)]
+      (= "atom" reserved-keyword) ["atom" (extract reserved-keyword code)] 
+      (= "keyword" reserved-keyword) ["keyword" (extract reserved-keyword)]
+      (= "symbol" reserved-keyword) ["symbol" (extract reserved-keyword)]
+      (= "name" reserved-keyword) ["name" (extract reserved-keyword)]
+      (= "intern" reserved-keyword) ["intern" (extract reserved-keyword)]
+      (= "namespace" reserved-keyword) ["namespace" (extract  reserved-keyword)]
+      (= "keyword?" reserved-keyword) ["keyword?" (extract  reserved-keyword)]
       :else nil)))
 
 (defn parse-operator [code]
@@ -62,12 +70,8 @@
       nil
       [string (apply str (drop (+ 2 (count string)) code))])))
 
-(defn parse [exp cd]
-  (loop [expression exp code cd]
-    (if (empty? code) 
-      expression
-      (recur {:node (str (:node expression) (first code))} 
-             (apply str (rest code))))))
+(defn parse [node code]
+  (conj node code))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
