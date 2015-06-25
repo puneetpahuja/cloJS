@@ -43,7 +43,10 @@
   (let [reserved-keyword (first (parse-identifier code))]
     (cond
       (nil? boolean) nil
+      (= "def" reserved-keyword) ["def" (extract reserved-keyword code)]
+      (= "defn" reserved-keyword) ["defn" (extract reserved-keyword code)]
       (= "nil" reserved-keyword) ["nil" (extract reserved-keyword code)]
+      (= "fn" reserved-keyword) ["fn" (extract reserved-keyword code)]
       (= "atom" reserved-keyword) ["atom" (extract reserved-keyword code)] 
       (= "keyword" reserved-keyword) ["keyword" (extract reserved-keyword code)]
       (= "symbol" reserved-keyword) ["symbol" (extract reserved-keyword code)]
@@ -52,6 +55,7 @@
       (= "namespace" reserved-keyword) ["namespace" (extract reserved-keyword code)]
       (= "keyword?" reserved-keyword) ["keyword?" (extract reserved-keyword code)]
       (= "for" reserved-keyword) ["for" (extract reserved-keyword code)]
+      (= "require" reserved-keyword) ["require" (extract reserved-keyword code)]
       :else nil)))
 
 (defn parse-operator [code]
@@ -74,6 +78,8 @@
     (if (nil? string) 
       nil
       [string (apply str (drop (+ 2 (count string)) code))])))
+
+
 
 (defn parse [node code]
   (conj node code))
