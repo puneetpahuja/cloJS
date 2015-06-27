@@ -4,49 +4,59 @@
 (defn not-nil? [element]
   (not (nil? element)))
 
-(defn parse-sequence [string functions]
-  (filter (fn [x] (not-nil? (first x)))
-          (for [function functions]
-            (function string))))
+(defn batch-parse [string functions]
+  (let [result ((first functions) string)]
+    (if (nil? (first result))
+      (recur string (rest functions))
+      result)))
+
 
 (defn extract [element code]
-  (apply str (drop (count element) code)))
+  (if (= java.lang.Character (type element))
+    (apply str (rest code))
+    (apply str (drop (count element) code))))
 
 (defn parse-identifier [code]
   (let [identifier (re-find #"^\w+[\\?]?" code)]
     (if (nil? identifier)
-      [nil code]
+      nil
+      [identifier (extract identifier code)])))
+
+(defn parse-name [code]
+  (let [identifier (first (parse-identifier code))]
+    (if (nil? identifier)
+      nil
       (if (= "true" identifier)
-        [nil code]
+        nil
         (if (= "false" identifier)
-          [nil code]
+          nil
           [identifier (extract identifier code)])))))
 
 (defn parse-keyword [code]
   (let [keyword (re-find #"^:\w+" code)]
     (if (nil? keyword)
-      [nil code]
-      [keyword (extract keyword code)])))
+      nil
+      [(read-string keyword) (extract keyword code)])))
 
 (defn parse-space [code]
   (let [space (re-find #"^\s+" code)]
     (if (nil? space)
-      [nil code]
+      nil
       [space (extract space code)])))
 
 (defn parse-number [code]
   (let [number (re-find #"^[+-]?\d+[.]?[\d+]?\s" code)]
     (if (nil? number)
-      [nil code]
+      nil
       [(read-string number) (extract number code)])))
 
 (defn parse-boolean [code]
   (let [boolean (first (parse-identifier code))]
     (cond
-      (nil? boolean) [nil code]
+      (nil? boolean) nil
       (= "true" boolean) [true (extract boolean code)]
       (= "false" boolean) [false (extract boolean code)]
-      :else [nil code])))
+      :else nil)))
 
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
@@ -70,16 +80,16 @@
 (defn parse-operator [code]
   (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
     (cond
-      (= "+ " operator) ["+" (apply str (rest (rest code)))]
-      (= "- " operator) ["-" (apply str (rest (rest code)))]
-      (= "* " operator) ["*" (apply str (rest (rest code)))]
-      (= "/ " operator) ["/" (apply str (rest (rest code)))]
-      (= "= " operator) ["=" (apply str (rest (rest code)))]
-      (= "== " operator) ["==" (apply str (rest (rest code)))]
-      (= "> " operator) [">" (apply str (rest (rest code)))]
-      (= "< " operator) ["<" (apply str (rest (rest code)))]
-      (= ">= " operator) [">=" (apply str (rest (rest code)))]
-      (= "<= " operator) ["<=" (apply str (rest (rest code)))]
+      (= "+ " operator) [:plus (apply str (rest (rest code)))]
+      (= "- " operator) [:minus (apply str (rest (rest code)))]
+      (= "* " operator) [:mulitply (apply str (rest (rest code)))]
+      (= "/ " operator) [:divide (apply str (rest (rest code)))]
+      (= "= " operator) [:equals (apply str (rest (rest code)))]
+      (= "== " operator) [:equalequals (apply str (rest (rest code)))]
+      (= "> " operator) [:greater-than (apply str (rest (rest code)))]
+      (= "< " operator) [:less-than (apply str (rest (rest code)))]
+      (= ">= " operator) [:greater-than-or-equal (apply str (rest (rest code)))]
+      (= "<= " operator) [:less-than-or-equal (apply str (rest (rest code)))]
       :else [nil code] )))
 
 (defn parse-string [code]
@@ -88,15 +98,25 @@
       [nil code]
       [string (apply str (drop (+ 2 (count string)) code))])))
 
-(defn parse-function [code]
-  (let [function (first (parse-sequence code [parse-space
-                                              parse-keyword
-                                              parse-reserved
-                                              parse-operator
-                                              parse-identifier]))]
-    (if (= \space function) 
-      (recur (rest code))
-      function)))
+(defn parse-square-bracket [code]
+  (let [char (first code)]
+    (if (= \[ char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-form [code]
+  (batch-parse code [parse-keyword
+                     parse-reserved
+                     parse-operator
+                     parse-name]))
+
+(defn parse-argument [code]
+  (batch-parse code [parse-keyword                              
+                     parse-operator
+                     parse-name
+                     parse-number
+                     parse-string
+                     parse-boolean]))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
