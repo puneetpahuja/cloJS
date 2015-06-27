@@ -5,11 +5,12 @@
   (not (nil? element)))
 
 (defn batch-parse [string functions]
-  (let [result ((first functions) string)]
-    (if (nil? (first result))
-      (recur string (rest functions))
-      result)))
-
+  (if (empty? functions)
+    nil
+    (let [result ((first functions) string)]
+      (if (nil? (first result))
+        (recur string (rest functions))
+        result))))
 
 (defn extract [element code]
   (if (= java.lang.Character (type element))
@@ -117,6 +118,18 @@
                      parse-number
                      parse-string
                      parse-boolean]))
+
+(defn parse-vector [cd]
+  (if (= \[ (first cd))
+    (loop [code (apply str (rest cd)) array []]
+      (if (= \] (first code))
+        array
+        (let [result (batch-parse code [parse-space
+                                        parse-argument
+                                        parse-vector])]
+          (if (nil? result)
+            array
+            (recur (last result) (conj array (first result)))))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
