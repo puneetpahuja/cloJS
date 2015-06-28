@@ -12,13 +12,27 @@
         (recur string (rest functions))
         result))))
 
+(defn parse-nested [code-string 
+                    opening-character 
+                    closing-character
+                    functions]
+  (if (= opening-character (first code-string))
+    (loop [code (apply str (rest code-string)) array []]
+      (if (= closing-character (first code))
+        [(filter #(not= " " %) array) (apply str (rest code))]
+        (let [result (batch-parse code functions)]
+          (if (nil? result)
+            [(filter #(not= " " %) array) (apply str (rest code))]
+            (recur (last result) (conj array (first result)))))))
+    nil))
+
 (defn extract [element code]
   (if (= java.lang.Character (type element))
     (apply str (rest code))
     (apply str (drop (count element) code))))
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^\w+[\\?]?" code)]
+  (let [identifier (re-find #"^[a-z]+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -46,7 +60,7 @@
       [space (extract space code)])))
 
 (defn parse-number [code]
-  (let [number (re-find #"^[+-]?\d+[.]?[\d+]?\s" code)]
+  (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
     (if (nil? number)
       nil
       [(read-string number) (extract number code)])))
@@ -119,17 +133,18 @@
                      parse-string
                      parse-boolean]))
 
-(defn parse-vector [cd]
-  (if (= \[ (first cd))
-    (loop [code (apply str (rest cd)) array []]
-      (if (= \] (first code))
-        array
-        (let [result (batch-parse code [parse-space
-                                        parse-argument
-                                        parse-vector])]
-          (if (nil? result)
-            array
-            (recur (last result) (conj array (first result)))))))))
+(defn parse-vector [code]
+  (parse-nested code  \[ \] [parse-space
+                             parse-argument
+                             parse-form
+                             parse-vector]))
+
+(defn parse-expression [code]
+  (parse-nested code \( \) [parse-space
+                            parse-form
+                            parse-argument
+                            parse-vector
+                            parse-expression]))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
