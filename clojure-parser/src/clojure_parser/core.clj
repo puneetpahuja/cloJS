@@ -119,6 +119,17 @@
       [char (extract char code)]
       nil)))
 
+(defn parse-vector [code]
+  (parse-nested code  \[ \] [parse-space
+                             parse-keyword
+                             parse-operator
+                             parse-name
+                             parse-number
+                             parse-string
+                             parse-boolean
+                             parse-reserved
+                             parse-vector]))
+
 (defn parse-form [code]
   (batch-parse code [parse-keyword
                      parse-reserved
@@ -131,19 +142,13 @@
                      parse-name
                      parse-number
                      parse-string
+                     parse-vector
                      parse-boolean]))
-
-(defn parse-vector [code]
-  (parse-nested code  \[ \] [parse-space
-                             parse-argument
-                             parse-form
-                             parse-vector]))
 
 (defn parse-expression [code]
   (parse-nested code \( \) [parse-space
                             parse-form
                             parse-argument
-                            parse-vector
                             parse-expression]))
 
 (defn -main
