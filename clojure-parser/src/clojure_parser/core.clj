@@ -36,10 +36,14 @@
   (if (= opening-character (first code-string))
     (loop [code (apply str (rest code-string)) array [type]]
       (if (= closing-character (first code))
-        [(filter #(not= " " %) array) (apply str (rest code))]
+        [(filter #(not= \newline %) 
+                 (filter #(nil? (re-find #"^\s+" (str %))) array)) 
+         (apply str (rest code))]
         (let [result (batch-parse code functions)]
           (if (nil? result)
-            [(filter #(not= " " %) array) (apply str (rest code))]
+            [(filter #(not= \newline %)
+                     (filter #(nil? (re-find #"^\s+" (str %))) array))
+             (apply str (rest code))]
             (recur (last result) (conj array (first result)))))))
     nil))
 
@@ -73,7 +77,7 @@
 
 (defn parse-newline [code]
     (if (= \newline (first code)) 
-      [" " (apply str (rest code))]
+      [\newline (apply str (rest code))]
       nil))
 
 (defn parse-number [code]
@@ -138,7 +142,6 @@
 
 (defn parse-vector [code]
   (nested-parse code  :vector \[ \] [parse-space
-                                     parse-newline
                                      parse-keyword
                                      parse-operator
                                      parse-name
@@ -164,8 +167,8 @@
                      parse-boolean]))
 
 (defn parse-expression [code]
-  (nested-parse code :expression \( \) [parse-space
-                                        parse-newline
+  (nested-parse code :expression \( \) [parse-newline
+                                        parse-space
                                         parse-form
                                         parse-argument
                                         parse-expression]))
@@ -181,13 +184,20 @@
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 
-(defn types [lst]
-  (loop [list lst
-         types []]
-    (if (not-empty list)
-      (recur (rest list) (conj types (type (first list))))
-      types)))
-
+(defn namespace [form]
+  (cond
+    (= :plus form) [+]
+    (= :minus form) [-]
+    (= :multiply form) [*]
+    (= :divide form) [/]
+    (= :equals form) [=]
+    (= :equalequals form) [==]
+    (= :greater-than form) [>]
+    (= :less-than form) [<]
+    (= :greater-than-or-equal form) [>=]
+    (= [:less-than-or-equal form) [<=]
+       :else nil)))
+  
 (defn ast
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
@@ -195,14 +205,26 @@
          remainder (apply str (rest (parse-expression (slurp path))))
          tree []]
      (if (empty? remainder)
-       tree
+       (conj tree expression)
        (if (not= \(  (first remainder))
          (recur expression
-                (apply str (rest remainder))
+                (rest remainder)
                 tree)
          (recur (first (parse-expression remainder))
                 (apply str (rest (parse-expression remainder)))
                 (conj tree expression)))))))
+
+(defn build [form args]
+  ())
+
+(defn interpret [expression]
+  (if (= :expression (first expression))
+    (let [form (first (rest expression))
+          arguments (rest (rest expression))]
+      (cond
+        (= :plus form) (build + arguments)
+        (= :minus form) (build - arguments)
+        (= 
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
