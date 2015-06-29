@@ -44,7 +44,7 @@
     nil))
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^[a-z]+[\\?]?" code)]
+  (let [identifier (re-find #"^[\w-.]+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -60,7 +60,7 @@
           [identifier (extract identifier code)])))))
 
 (defn parse-keyword [code]
-  (let [keyword (re-find #"^:\w+" code)]
+  (let [keyword (re-find #"^:[\w-.]+" code)]
     (if (nil? keyword)
       nil
       [(read-string keyword) (extract keyword code)])))
@@ -73,10 +73,9 @@
 
 (defn parse-newline [code]
     (if (= \newline (first code)) 
-      [" " (extract \newline code)]
-      (if (= \n (first code))
-        [" " (extract \n code)]
-        nil)))
+      [" " (apply str (rest code))]
+      nil))
+
 (defn parse-number [code]
   (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
     (if (nil? number)
@@ -189,8 +188,17 @@
       (recur (rest list) (conj types (type (first list))))
       types)))
 
-(defn -main
+(defn -maain
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
    (let [tree (first (parse-expression (slurp path)))]
      (clojure.pprint/pprint (mapify tree)))))
+
+(defn -main
+  "Clojure parser that returns an AST of the clojure code passed to it."
+  ([path]
+   (loop [tuple (parse-expression (slurp path))
+         tree []]
+     (if (not-empty? (rest tuple))
+       (recur (parse-expression (rest tuple)) (conj tree (first tuple)))
+       tree))))
