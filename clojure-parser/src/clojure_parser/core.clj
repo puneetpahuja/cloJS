@@ -114,7 +114,7 @@
     (cond
       (= "+ " operator) [:plus (apply str (rest (rest code)))]
       (= "- " operator) [:minus (apply str (rest (rest code)))]
-      (= "* " operator) [:mulitply (apply str (rest (rest code)))]
+      (= "* " operator) [:multiply (apply str (rest (rest code)))]
       (= "/ " operator) [:divide (apply str (rest (rest code)))]
       (= "= " operator) [:equals (apply str (rest (rest code)))]
       (= "== " operator) [:equalequals (apply str (rest (rest code)))]
@@ -188,17 +188,25 @@
       (recur (rest list) (conj types (type (first list))))
       types)))
 
-(defn -maain
+(defn ast
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
-   (let [tree (first (parse-expression (slurp path)))]
-     (clojure.pprint/pprint (mapify tree)))))
+   (loop [expression (first (parse-expression (slurp path)))
+         remainder (apply str (rest (parse-expression (slurp path))))
+         tree []]
+     (if (empty? remainder)
+       tree
+       (if (not= \(  (first remainder))
+         (recur expression
+                (apply str (rest remainder))
+                tree)
+         (recur (first (parse-expression remainder))
+                (apply str (rest (parse-expression remainder)))
+                (conj tree expression)))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
-  ([path]
-   (loop [tuple (parse-expression (slurp path))
-         tree []]
-     (if (not-empty? (rest tuple))
-       (recur (parse-expression (rest tuple)) (conj tree (first tuple)))
-       tree))))
+  [path]
+  (let [tree (ast path)]
+    (for [expression tree]
+      (clojure.pprint/pprint expression))))
