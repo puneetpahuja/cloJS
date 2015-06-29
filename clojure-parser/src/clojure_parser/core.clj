@@ -28,20 +28,6 @@
         (recur string (rest functions))
         result))))
 
-(defn parse-nested [code-string 
-                    opening-character 
-                    closing-character
-                    functions]
-  (if (= opening-character (first code-string))
-    (loop [code (apply str (rest code-string)) array []]
-      (if (= closing-character (first code))
-        [(filter #(or (not= "\n" %) (not= " " %) (not= "\n " %)) array) (apply str (rest code))]
-        (let [result (batch-parse code functions)]
-          (if (nil? result)
-            [(filter #(or (not= "\n" %) (not= " " %) (not= "\n " %))  array) (apply str (rest code))]
-            (recur (last result) (conj array (first result)))))))
-    nil))
-
 (defn nested-parse [code-string 
                     type
                     opening-character 
@@ -86,10 +72,11 @@
       [space (extract space code)])))
 
 (defn parse-newline [code]
-    (if (or (= \newline (first code)) (= "\n  " (first code)))
+    (if (= \newline (first code)) 
       [" " (extract \newline code)]
-      nil))
-
+      (if (= \n (first code))
+        [" " (extract \n code)]
+        nil)))
 (defn parse-number [code]
   (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
     (if (nil? number)
@@ -107,7 +94,7 @@
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
     (cond
-      (nil? boolean) [nil code]
+      (nil? boolean) nil
       (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
       (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
@@ -121,7 +108,7 @@
       (= "keyword?" reserved-keyword) [:keyword? (extract reserved-keyword code)]
       (= "for" reserved-keyword) [:for (extract reserved-keyword code)]
       (= "require" reserved-keyword) [:require (extract reserved-keyword code)]
-      :else [nil code])))
+      :else nil)))
 
 (defn parse-operator [code]
   (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
@@ -136,12 +123,12 @@
       (= "< " operator) [:less-than (apply str (rest (rest code)))]
       (= ">= " operator) [:greater-than-or-equal (apply str (rest (rest code)))]
       (= "<= " operator) [:less-than-or-equal (apply str (rest (rest code)))]
-      :else [nil code] )))
+      :else nil)))
 
 (defn parse-string [code]
   (let [string (last (re-find #"^\"([^\"]*)\"" code))]
     (if (nil? string) 
-      [nil code]
+      nil
       [string (apply str (drop (+ 2 (count string)) code))])))
 
 (defn parse-square-bracket [code]
