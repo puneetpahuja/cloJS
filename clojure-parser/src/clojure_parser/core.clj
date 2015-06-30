@@ -214,18 +214,6 @@
                 (apply str (rest (parse-expression remainder)))
                 (conj tree expression)))))))
 
-(defn build [form args]
-  ())
-
-(defn interpret [expression]
-  (if (= :expression (first expression))
-    (let [form (first (rest expression))
-          arguments (rest (rest expression))]
-      (cond
-        (= :plus form) (build + arguments)
-        (= :minus form) (build - arguments)
-        (= 
-
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
   [path]
