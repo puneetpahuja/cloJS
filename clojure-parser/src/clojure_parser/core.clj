@@ -100,6 +100,7 @@
       (nil? boolean) nil
       (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
       (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
+      (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
       (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
       (= "atom" reserved-keyword) [:atom (extract reserved-keyword code)] 
@@ -158,10 +159,11 @@
                      parse-name]))
 
 (defn parse-argument [code]
-  (batch-parse code [parse-keyword                              
+  (batch-parse code [parse-number
+                     parse-keyword                              
                      parse-operator
+                     parse-reserved
                      parse-name
-                     parse-number
                      parse-string
                      parse-vector
                      parse-boolean]))
@@ -169,8 +171,8 @@
 (defn parse-expression [code]
   (nested-parse code :expression \( \) [parse-newline
                                         parse-space
-                                        parse-form
                                         parse-argument
+                                        parse-form
                                         parse-expression]))
 
 (defn mapify [lst]
@@ -180,24 +182,33 @@
            (let [argument (first list)]
              (if (not-empty list)
                (if (= clojure.lang.LazySeq (type argument))
-                 (recur (rest list) (conj arguments (mapify argument)))
+                 (if (= :expression (first argument))
+                   (recur (rest (rest list)) (conj arguments (mapify (rest argument)))) 
+                   (recur (rest list) (conj arguments (mapify argument))))
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 
-(defn namespace [form]
+(defn forms [form]
   (cond
-    (= :plus form) [+]
-    (= :minus form) [-]
-    (= :multiply form) [*]
-    (= :divide form) [/]
-    (= :equals form) [=]
-    (= :equalequals form) [==]
-    (= :greater-than form) [>]
-    (= :less-than form) [<]
-    (= :greater-than-or-equal form) [>=]
-    (= [:less-than-or-equal form) [<=]
-       :else nil)))
-  
+    (= :plus form) +
+    (= :minus form) -
+    (= :multiply form) *
+    (= :divide form) /
+    (= :equals form) =
+    (= :equalequals form) ==
+    (= :greater-than form) >
+    (= :less-than form) <
+    (= :greater-than-or-equal form) >=
+    (= :less-than-or-equal form) <=
+    (= :println form) println
+       :else nil))
+
+(defn interpret [exp]
+  (let [result (first (parse-expression exp))]
+    (if (= :expression (first result))
+      (let [expression (rest result)]
+        ((forms (first expression)) (first (rest expression)) (last expression))))))
+
 (defn ast
   "Clojure parser that returns an AST of the clojure code passed to it."
   ([path]
@@ -218,5 +229,6 @@
   "Clojure parser that returns an AST of the clojure code passed to it."
   [path]
   (let [tree (ast path)]
-    (for [expression tree]
-      (clojure.pprint/pprint expression))))
+    (assoc {} :program
+           (for [expression tree]
+             (mapify (rest expression))))))
