@@ -229,6 +229,8 @@
   "Clojure parser that returns an AST of the clojure code passed to it."
   [path]
   (let [tree (ast path)]
-    (assoc {} :program
+    (clojure.pprint/pprint (assoc {} :program
            (for [expression tree]
-             (mapify (rest expression))))))
+             (mapify (rest expression)))))))
+
+(-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/square.clj")
