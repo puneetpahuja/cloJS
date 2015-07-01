@@ -188,8 +188,16 @@
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 
-(defn format-special-forms [exp]
-  exp)
+(defn concrete-to-abstract [exp]
+  (if (contains? exp :defn)
+    (let [args (:defn exp)]
+      (assoc {} :type :defn
+             :name (first args)
+             :args (first (rest args))
+             :body (last args)))
+    (if (contains? exp :vector)
+      (assoc {} :type :vector
+             :elements ()
 
 (defn forms [form]
   (cond
@@ -219,14 +227,14 @@
          remainder (apply str (rest (parse-expression (slurp path))))
          tree []]
      (if (empty? remainder)
-       (conj tree expression)
+       (conj tree (concrete-to-abstract (mapify (rest expression))))
        (if (not= \(  (first remainder))
          (recur expression
                 (rest remainder)
                 tree)
          (recur (first (parse-expression remainder))
                 (apply str (rest (parse-expression remainder)))
-                (conj tree expression)))))))
+                (conj tree (concrete-to-abstract (mapify (rest expression))))))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
@@ -234,6 +242,6 @@
   (let [tree (ast path)]
     (clojure.pprint/pprint (assoc {} :program
            (for [expression tree]
-             (mapify (rest expression)))))))
+             expression)))))
 
 (-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/square.clj")
