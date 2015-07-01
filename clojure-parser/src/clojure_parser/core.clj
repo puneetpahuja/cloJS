@@ -169,11 +169,11 @@
                      parse-boolean]))
 
 (defn parse-expression [code]
-  (nested-parse code :expression \( \) [parse-newline
-                                        parse-space
-                                        parse-argument
-                                        parse-form
-                                        parse-expression]))
+  (nested-parse code :expr \( \) [parse-newline
+                                  parse-space
+                                  parse-argument
+                                  parse-form
+                                  parse-expression]))
 
 (defn mapify [lst]
   (assoc {} (first lst) 
@@ -182,11 +182,14 @@
            (let [argument (first list)]
              (if (not-empty list)
                (if (= clojure.lang.LazySeq (type argument))
-                 (if (= :expression (first argument))
+                 (if (= :expr (first argument))
                    (recur (rest (rest list)) (conj arguments (mapify (rest argument)))) 
                    (recur (rest list) (conj arguments (mapify argument))))
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
+
+(defn format-special-forms [exp]
+  exp)
 
 (defn forms [form]
   (cond
@@ -205,7 +208,7 @@
 
 (defn interpret [exp]
   (let [result (first (parse-expression exp))]
-    (if (= :expression (first result))
+    (if (= :expr (first result))
       (let [expression (rest result)]
         ((forms (first expression)) (first (rest expression)) (last expression))))))
 

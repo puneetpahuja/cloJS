@@ -26,15 +26,18 @@
     (println (vec (rest (first (rest (rest exp))))))
     (println (last exp))))
 
+(defn evaluate [expression]
+  (if (= :defn (first expression))
+    (definate expression)
+    ((forms (first expression))
+     (first (rest expression))
+     (last expression))))
+
 (defn interpret [exp]
   (let [result (first (parser/parse-expression exp))]
-    (if (= :expression (first result))
+    (if (= :expr (first result))
       (let [expression (rest result)]
-        (if (= :defn (first expression))
-          (definate expression)
-          ((forms (first expression))
-           (first (rest expression))
-           (last expression))))
+        (evaluate expression))
       (read-string (rest result)))))
 
 (defn -main [path]
