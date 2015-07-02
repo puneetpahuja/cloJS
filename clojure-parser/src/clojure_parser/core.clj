@@ -189,36 +189,26 @@
                arguments)))))
 
 (defn concrete-to-abstract [exp]
-  (if (contains? exp :defn)
-    (let [args (:defn exp)]
-      (assoc {} :type :defn
-             :name (first args)
-             :args (first (rest args))
-             :body (last args)))
-    (if (contains? exp :vector)
-      (assoc {} :type :vector
-             :elements ()
-
-(defn forms [form]
   (cond
-    (= :plus form) +
-    (= :minus form) -
-    (= :multiply form) *
-    (= :divide form) /
-    (= :equals form) =
-    (= :equalequals form) ==
-    (= :greater-than form) >
-    (= :less-than form) <
-    (= :greater-than-or-equal form) >=
-    (= :less-than-or-equal form) <=
-    (= :println form) println
-       :else nil))
-
-(defn interpret [exp]
-  (let [result (first (parse-expression exp))]
-    (if (= :expr (first result))
-      (let [expression (rest result)]
-        ((forms (first expression)) (first (rest expression)) (last expression))))))
+    (= clojure.lang.PersistentVector (type exp)) 
+    (loop [args [] vect exp]
+      (if (empty? vect)
+        args
+        (recur (conj args (assoc {} :name (first vect) 
+                                 :type (type (first vect))))
+               (rest vect))))
+    (contains? exp :defn) 
+    (let [args (:defn exp)]
+      (assoc {} :body (concrete-to-abstract (last args))
+             :args (concrete-to-abstract (second args))
+             :name (first args)
+             :type :defn))
+    (contains? exp :vector) 
+    (let [vect (:vector exp)]
+      (assoc exp :vector (concrete-to-abstract
+                          (:vector exp))))
+    :else (assoc {} :args (concrete-to-abstract (last (vals exp)))
+                 :form (first (keys exp)))))
 
 (defn ast
   "Clojure parser that returns an AST of the clojure code passed to it."
@@ -235,6 +225,22 @@
          (recur (first (parse-expression remainder))
                 (apply str (rest (parse-expression remainder)))
                 (conj tree (concrete-to-abstract (mapify (rest expression))))))))))
+
+(defn cst
+  "Clojure parser that returns an AST of the clojure code passed to it."
+  ([path]
+   (loop [expression (first (parse-expression (slurp path)))
+         remainder (apply str (rest (parse-expression (slurp path))))
+         tree []]
+     (if (empty? remainder)
+       (conj tree (mapify (rest expression)))
+       (if (not= \(  (first remainder))
+         (recur expression
+                (rest remainder)
+                tree)
+         (recur (first (parse-expression remainder))
+                (apply str (rest (parse-expression remainder)))
+                (conj tree (mapify (rest expression)))))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
