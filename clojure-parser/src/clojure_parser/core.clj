@@ -194,15 +194,15 @@
     (loop [args [] vect exp]
       (if (empty? vect)
         args
-        (recur (conj args (assoc {} :name (first vect) 
-                                 :type (type (first vect))))
+        (recur (conj args (assoc {}  :type (type (first vect))
+                                 :name (first vect)))
                (rest vect))))
     (contains? exp :defn) 
     (let [args (:defn exp)]
       (assoc {} :body (concrete-to-abstract (last args))
              :args (concrete-to-abstract (second args))
              :name (first args)
-             :type :defn))
+             :form :defn))
     (contains? exp :vector) 
     (let [vect (:vector exp)]
       (assoc exp :vector (concrete-to-abstract
