@@ -33,7 +33,7 @@
      (first (rest expression))
      (last expression))))
 
-(defn interpret [exp]
+(defn interpret-expression [exp]
   (let [result (first (parser/parse-expression exp))]
     (if (= :expr (first result))
       (let [expression (rest result)]
@@ -45,4 +45,4 @@
     (clojure.pprint/pprint 
      (assoc {} :program
             (for [expression tree]
-              (parser/mapify (rest expression)))))))
+              expression)))))
