@@ -141,15 +141,18 @@
       [char (extract char code)]
       nil)))
 
+(declare parse-expression)
+
 (defn parse-vector [code]
   (nested-parse code  :vector \[ \] [parse-space
                                      parse-keyword
                                      parse-operator
-                                     parse-name
                                      parse-number
+                                     parse-name
                                      parse-string
                                      parse-boolean
                                      parse-reserved
+                                     parse-expression
                                      parse-vector]))
 
 (defn parse-form [code]
