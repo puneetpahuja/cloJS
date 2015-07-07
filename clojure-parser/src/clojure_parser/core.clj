@@ -178,6 +178,9 @@
                                   parse-form
                                   parse-expression]))
 
+(defmacro definate [name args & body]
+  `(def ~name (fn ~args ~@body)))
+
 (defn mapify [lst]
   (assoc {} (first lst) 
          (loop [list (rest lst)
@@ -205,7 +208,7 @@
       (assoc {} :body (concrete-to-abstract (last args))
              :args (concrete-to-abstract (second args))
              :name (first args)
-             :form :defn))
+             :form :def))
     (contains? exp :vector) 
     (let [vect (:vector exp)]
       (assoc exp :vector (concrete-to-abstract
