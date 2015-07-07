@@ -178,8 +178,10 @@
                                   parse-form
                                   parse-expression]))
 
-(defmacro definate [name args & body]
-  `(def ~name (fn ~args ~@body)))
+(defmacro definate [fn-name args & body]
+  (let [name (symbol (name fn-name))]
+  `(def ~name (fn ~args ~@body))))
+
 
 (defn mapify [lst]
   (assoc {} (first lst) 
@@ -196,20 +198,18 @@
 
 (defn concrete-to-abstract [exp]
   (cond
-    (= clojure.lang.PersistentVector (type exp)) 
+    (= clojure.lang.PersistentVector (type exp))
     (loop [args [] vect exp]
       (if (empty? vect)
         args
         (recur (conj args (assoc {}  :type (type (first vect))
                                  :name (first vect)))
                (rest vect))))
-    (contains? exp :defn) 
+    (contains? exp :defn)
     (let [args (:defn exp)]
-      (assoc {} :body (concrete-to-abstract (last args))
-             :args (concrete-to-abstract (second args))
-             :name (first args)
+      (assoc {} :args (:defn exp)
              :form :def))
-    (contains? exp :vector) 
+    (contains? exp :vector)
     (let [vect (:vector exp)]
       (assoc exp :vector (concrete-to-abstract
                           (:vector exp))))
