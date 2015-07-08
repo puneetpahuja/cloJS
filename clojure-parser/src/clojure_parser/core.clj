@@ -217,9 +217,9 @@
 
 (defn ast
   "Clojure parser that returns an AST of the clojure code passed to it."
-  ([path]
-   (loop [expression (first (parse-expression (slurp path)))
-         remainder (apply str (rest (parse-expression (slurp path))))
+  ([code]
+   (loop [expression (first (parse-expression code))
+         remainder (apply str (rest (parse-expression code)))
          tree []]
      (if (empty? remainder)
        (conj tree (concrete-to-abstract (mapify (rest expression))))
@@ -250,7 +250,7 @@
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
   [path]
-  (let [tree (ast path)]
+  (let [tree (ast (slurp path))]
     (clojure.pprint/pprint (assoc {} :program
            (for [expression tree]
              expression)))))

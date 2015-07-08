@@ -4,34 +4,34 @@
 (require '[clojure-parser.core :as parser])
 
 (defn forms [form]
-  (cond
-    (= :defn form) :defn
-    (= :plus form) +
-    (= :minus form) -
-    (= :multiply form) *
-    (= :divide form) /
-    (= :equals form) =
-    (= :equalequals form) ==
-    (= :greater-than form) >
-    (= :less-than form) <
-    (= :greater-than-or-equal form) >=
-    (= :less-than-or-equal form) <=
-    (= :println form) println
-       :else nil))
+  (form
+    {:def :def
+    :plus +
+    :minus -
+    :multiply *
+    :divide /
+    :equals =}))
 
-(defn definate [exp]
-  (do
-    (println (first exp))
-    (println (read-string (first (rest exp))))
-    (println (vec (rest (first (rest (rest exp))))))
-    (println (last exp))))
+(defmacro definate [fn-name args & body]
+  (let [name (symbol (name fn-name))]
+  `(def ~name (fn ~args ~@body))))
+
+(defn lambdinate [& stuff]
+  (println stuff))
+
+(defn vectorate [vector-map]
+  (vec (map #(symbol (name %)) (:vector vector-map))))
 
 (defn evaluate [expression]
-  (if (= :defn (first expression))
-    (definate expression)
-    ((forms (first expression))
-     (first (rest expression))
-     (last expression))))
+  (let [func (:form expression)
+        args (:args expression)]
+    (cond
+      (= :def func) (println (first args) 
+                             (vectorate (second args))
+                             (list (forms (first (keys (last args))))
+                                   (first (vals (last args)))))
+      (= :fn func) (lambdinate args)
+      :else (func (first (rest expression)) (last expression)))))
 
 (defn interpret-expression [exp]
   (let [result (first (parser/parse-expression exp))]
@@ -45,4 +45,4 @@
     (clojure.pprint/pprint 
      (assoc {} :program
             (for [expression tree]
-              expression)))))
+              (evaluate expression))))))
