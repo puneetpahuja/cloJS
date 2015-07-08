@@ -182,7 +182,6 @@
   (let [name (symbol (name fn-name))]
   `(def ~name (fn ~args ~@body))))
 
-
 (defn mapify [lst]
   (assoc {} (first lst) 
          (loop [list (rest lst)
