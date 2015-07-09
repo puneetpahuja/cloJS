@@ -22,16 +22,19 @@
 (defn vectorate [vector-map]
   (vec (map #(symbol (name %)) (:vector vector-map))))
 
+(defn express [expression-map]
+  (list (forms (first (keys expression-map))) 
+        (for [arg (first (vals expression-map))] arg)))
+
 (defn evaluate [expression]
   (let [func (:form expression)
         args (:args expression)]
     (cond
       (= :def func) (println (first args) 
                              (vectorate (second args))
-                             (list (forms (first (keys (last args))))
-                                   (first (vals (last args)))))
+                             (express (last args)))
       (= :fn func) (lambdinate args)
-      :else (func (first (rest expression)) (last expression)))))
+      :else (println expression))))
 
 (defn interpret-expression [exp]
   (let [result (first (parser/parse-expression exp))]
@@ -41,8 +44,8 @@
       (read-string (rest result)))))
 
 (defn -main [path]
-  (let [tree (parser/ast path)]
-    (clojure.pprint/pprint 
+  (let [tree (parser/ast (slurp path))]
+    (clojure.pprint/pprint
      (assoc {} :program
             (for [expression tree]
               (evaluate expression))))))
