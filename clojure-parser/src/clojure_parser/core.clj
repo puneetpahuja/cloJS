@@ -61,7 +61,7 @@
         nil
         (if (= "false" identifier)
           nil
-          [identifier (extract identifier code)])))))
+          [(symbol (name identifier)) (extract identifier code)])))))
 
 (defn parse-keyword [code]
   (let [keyword (re-find #"^:[\w-.]+" code)]

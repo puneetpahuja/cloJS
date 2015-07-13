@@ -23,19 +23,19 @@
   (vec (map #(symbol (name %)) (:vector vector-map))))
 
 (defn express [expression-map]
-  (concat (list (symbol (name (forms (first (keys expression-map))))))
+  (concat (list (name (forms (first (keys expression-map)))))
           (for [arg (first (vals expression-map))] (symbol (name arg)))))
 
 (defn evaluate [expression]
   (let [func (:form expression)
         args (:args expression)]
-    (if (= :def func) 
-      (list (first args)
-        (vectorate (second args))
-        (express (last args)))
-      (if (= :fn func) 
-        (lambdinate args)
-        (println expression)))))
+    (cond 
+      (= :def func) (list (first args)
+                          (vectorate (second args))
+                          (express (last args)))
+      (= :fn func) (lambdinate args)
+      :else (list (name func)
+                    (map #(:name %) args)))))
 
 (defn interpret-expression [exp]
   (let [result (first (parser/parse-expression exp))]
