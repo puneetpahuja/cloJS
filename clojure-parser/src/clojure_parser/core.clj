@@ -197,21 +197,19 @@
 
 (defn concrete-to-abstract [exp]
   (cond
-    (= clojure.lang.PersistentVector (type exp))
+    (= clojure.lang.PersistentVector (type exp)) 
     (loop [args [] vect exp]
       (if (empty? vect)
         args
         (recur (conj args (assoc {}  :type (type (first vect))
                                  :name (first vect)))
                (rest vect))))
-    (contains? exp :defn)
-    (let [args (:defn exp)]
-      (assoc {} :args (:defn exp)
-             :form :def))
-    (contains? exp :vector)
-    (let [vect (:vector exp)]
-      (assoc exp :vector (concrete-to-abstract
-                          (:vector exp))))
+    (contains? exp :defn) (let [args (:defn exp)]
+                            (assoc {} :args (:defn exp)
+                                   :form :def))
+    (contains? exp :vector) (let [vect (:vector exp)]
+                              (assoc exp :vector (concrete-to-abstract
+                                                  (:vector exp))))
     :else (assoc {} :args (concrete-to-abstract (last (vals exp)))
                  :form (first (keys exp)))))
 
