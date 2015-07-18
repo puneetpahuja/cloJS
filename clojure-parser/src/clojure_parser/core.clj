@@ -1,6 +1,10 @@
 (ns clojure-parser.core
   (:gen-class))
 
+(declare concrete-to-abstract parse-expression)
+
+;;; Utility methods 
+
 (defn not-nil? [element]
   (not (nil? element)))
 
@@ -46,6 +50,8 @@
              (apply str (rest code))]
             (recur (last result) (conj array (first result)))))))
     nil))
+
+;;; Element parsers
 
 (defn parse-identifier [code]
   (let [identifier (re-find #"^[\w-.]+[\\?]?" code)]
@@ -141,7 +147,7 @@
       [char (extract char code)]
       nil)))
 
-(declare parse-expression)
+;;; Composite parsers
 
 (defn parse-vector [code]
   (nested-parse code  :vector \[ \] [parse-space
@@ -178,9 +184,22 @@
                                   parse-form
                                   parse-expression]))
 
+;;; Formatting methods
+
 (defmacro definate [fn-name args & body]
   (let [name (symbol (name fn-name))]
   `(def ~name (fn ~args ~@body))))
+
+(defn is-macro? [exp]
+  (some true? [(not-nil? (:defn exp))
+                (not-nil? (:fn exp))]))
+
+(defmacro expand-macro [exp]
+  (let [func exp]
+    `{:form :def
+      :args [(first (:defn ~func))
+             (second (:defn ~func))
+             (last (:defn ~func))]}))
 
 (defn mapify [lst]
   (assoc {} (first lst) 
@@ -195,20 +214,20 @@
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 
+;;; Main methods
+
 (defn concrete-to-abstract [exp]
   (cond
-    (= clojure.lang.PersistentVector (type exp)) 
+    (= clojure.lang.PersistentVector (type exp))
     (loop [args [] vect exp]
       (if (empty? vect)
         args
         (recur (conj args (assoc {}  :type (type (first vect))
                                  :name (first vect)))
                (rest vect))))
-    (contains? exp :defn) (let [args (:defn exp)]
-                            (assoc {} :args (:defn exp)
-                                   :form :def))
-    (contains? exp :vector) (let [vect (:vector exp)]
-                              (assoc exp :vector (concrete-to-abstract
+    (is-macro? exp) (expand-macro exp)
+    (contains? exp :vector)
+    (let [vect (:vector exp)] (assoc exp :vector (concrete-to-abstract
                                                   (:vector exp))))
     :else (assoc {} :args (concrete-to-abstract (last (vals exp)))
                  :form (first (keys exp)))))
