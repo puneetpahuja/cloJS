@@ -1,7 +1,7 @@
 (ns clojure-parser.core
   (:gen-class))
 
-(declare concrete-to-abstract parse-expression)
+(declare concrete-to-abstract parse-expression ast cst)
 
 ;;; Utility methods 
 
@@ -195,11 +195,7 @@
                 (not-nil? (:fn exp))]))
 
 (defmacro expand-macro [exp]
-  (let [func exp]
-    `{:form :def
-      :args [(first (:defn ~func))
-             (second (:defn ~func))
-             (last (:defn ~func))]}))
+  exp)
 
 (defn mapify [lst]
   (assoc {} (first lst) 
@@ -272,4 +268,4 @@
            (for [expression tree]
              expression)))))
 
-(-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/square.clj")
+(-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros")
