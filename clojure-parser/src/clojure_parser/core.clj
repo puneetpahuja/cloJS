@@ -147,6 +147,19 @@
       [char (extract char code)]
       nil)))
 
+(defn parse-quote [code]
+  (let [char (first code)]
+    (if (= \` char)
+      [:macro-body (extract char code)]
+      nil)))
+
+(defn parse-tilde [code]
+  (let [char (first code)]
+    (if (= \~ char)
+      [:de-reference (extract char code)]
+      nil)))
+
+
 ;;; Composite parsers
 
 (defn parse-vector [code]
@@ -177,9 +190,12 @@
                      parse-vector
                      parse-boolean]))
 
+
 (defn parse-expression [code]
   (nested-parse code :expr \( \) [parse-newline
                                   parse-space
+                                  parse-quote
+                                  parse-tilde
                                   parse-argument
                                   parse-form
                                   parse-expression]))
@@ -242,7 +258,7 @@
                 tree)
          (recur (first (parse-expression remainder))
                 (apply str (rest (parse-expression remainder)))
-                (conj tree (concrete-to-abstract (mapify (rest expression))))))))))
+                (conj tree (rest expression))))))))
 
 (defn cst
   "Clojure parser that returns an AST of the clojure code passed to it."
