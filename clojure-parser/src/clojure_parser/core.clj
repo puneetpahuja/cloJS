@@ -32,16 +32,16 @@
         (recur string (rest functions))
         result))))
 
-(defn nested-parse [code-string 
+(defn nested-parse [code-string
                     type
-                    opening-character 
+                    opening-character
                     closing-character
                     functions]
   (if (= opening-character (first code-string))
     (loop [code (apply str (rest code-string)) array [type]]
       (if (= closing-character (first code))
-        [(filter #(not= \newline %) 
-                 (filter #(nil? (re-find #"^\s+" (str %))) array)) 
+        [(filter #(not= \newline %)
+                 (filter #(nil? (re-find #"^\s+" (str %))) array))
          (apply str (rest code))]
         (let [result (batch-parse code functions)]
           (if (nil? result)
@@ -61,13 +61,11 @@
 
 (defn parse-name [code]
   (let [identifier (first (parse-identifier code))]
-    (if (nil? identifier)
-      nil
-      (if (= "true" identifier)
-        nil
-        (if (= "false" identifier)
-          nil
-          [(symbol (name identifier)) (extract identifier code)])))))
+    (cond 
+      (nil? identifier) nil
+      (= "true" identifier) nil
+      (= "false" identifier) nil
+      :else [(symbol (name identifier)) (extract identifier code)])))
 
 (defn parse-keyword [code]
   (let [keyword (re-find #"^:[\w-.]+" code)]
@@ -106,6 +104,7 @@
       (nil? boolean) nil
       (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
       (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
+      (= "defmacro" reserved-keyword) [:defmacro (extract reserved-keyword code)]
       (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
       (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
@@ -128,11 +127,8 @@
       (= "* " operator) [:multiply (apply str (rest (rest code)))]
       (= "/ " operator) [:divide (apply str (rest (rest code)))]
       (= "= " operator) [:equals (apply str (rest (rest code)))]
-      (= "== " operator) [:equalequals (apply str (rest (rest code)))]
       (= "> " operator) [:greater-than (apply str (rest (rest code)))]
       (= "< " operator) [:less-than (apply str (rest (rest code)))]
-      (= ">= " operator) [:greater-than-or-equal (apply str (rest (rest code)))]
-      (= "<= " operator) [:less-than-or-equal (apply str (rest (rest code)))]
       :else nil)))
 
 (defn parse-string [code]
@@ -158,7 +154,6 @@
     (if (= \~ char)
       [:de-reference (extract char code)]
       nil)))
-
 
 ;;; Composite parsers
 
@@ -202,16 +197,17 @@
 
 ;;; Formatting methods
 
-(defmacro definate [fn-name args & body]
-  (let [name (symbol (name fn-name))]
-  `(def ~name (fn ~args ~@body))))
-
 (defn is-macro? [exp]
-  (some true? [(not-nil? (:defn exp))
-                (not-nil? (:fn exp))]))
+  (not (nil? (:defn exp))))
 
-(defmacro expand-macro [exp]
-  exp)
+(defn dereference [macro name args body]
+  (list macro name args body))
+  
+(defn expand-macro [exp]
+  (if (is-macro? exp)
+    (let [parts (:defn exp)]
+      (dereference :defn (first parts) (second parts) (last parts)))
+    exp))
 
 (defn mapify [lst]
   (assoc {} (first lst) 
@@ -228,53 +224,21 @@
 
 ;;; Main methods
 
-(defn concrete-to-abstract [exp]
-  (cond
-    (= clojure.lang.PersistentVector (type exp))
-    (loop [args [] vect exp]
-      (if (empty? vect)
-        args
-        (recur (conj args (assoc {}  :type (type (first vect))
-                                 :name (first vect)))
-               (rest vect))))
-    (is-macro? exp) (expand-macro exp)
-    (contains? exp :vector)
-    (let [vect (:vector exp)] (assoc exp :vector (concrete-to-abstract
-                                                  (:vector exp))))
-    :else (assoc {} :args (concrete-to-abstract (last (vals exp)))
-                 :form (first (keys exp)))))
-
 (defn ast
-  "Clojure parser that returns an AST of the clojure code passed to it."
+  "Returns AST of the clojure code passed to it."
   ([code]
    (loop [expression (first (parse-expression code))
          remainder (apply str (rest (parse-expression code)))
          tree []]
      (if (empty? remainder)
-       (conj tree (concrete-to-abstract (mapify (rest expression))))
+       (conj tree (expand-macro (mapify (rest expression))))
        (if (not= \(  (first remainder))
          (recur expression
                 (rest remainder)
                 tree)
          (recur (first (parse-expression remainder))
                 (apply str (rest (parse-expression remainder)))
-                (conj tree (rest expression))))))))
-
-(defn cst
-  "Clojure parser that returns an AST of the clojure code passed to it."
-  ([path]
-   (loop [expression (first (parse-expression (slurp path)))
-         remainder (apply str (rest (parse-expression (slurp path))))
-         tree []]
-     (if (empty? remainder)
-       (conj tree (mapify (rest expression)))
-       (if (not= \(  (first remainder))
-         (recur expression
-                (rest remainder)
-                tree)
-         (recur (first (parse-expression remainder))
-                (apply str (rest (parse-expression remainder)))
-                (conj tree (mapify (rest expression)))))))))
+                (conj tree (expand-macro (mapify (rest expression))))))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
@@ -284,4 +248,4 @@
            (for [expression tree]
              expression)))))
 
-(-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros")
+(-main "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/square.clj")
