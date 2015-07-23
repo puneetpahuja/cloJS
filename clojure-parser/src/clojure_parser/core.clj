@@ -242,17 +242,24 @@
 (defn is-macro? [exp]
   (not (nil? (:defn exp))))
 
+(defn de-ref [refs body]
+  (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
+    (loop [keys (keys refs)
+           deref-string deref-string]
+      (if (empty? keys)
+        deref-string
+        (recur (rest keys)
+               (string/replace deref-string
+                               (re-pattern (str ":de-ref " (name (first keys))))
+                               (str ((first keys) refs))))))))
+
 (defn de-reference [macro parts]
-  (let [macro-args (:vector (second (:defmacro macro)))
+  (let [macro-args (map keyword (:vector (second (:defmacro macro))))
         macro-body (last (:defmacro macro))]
     (if (= (count macro-args) (count parts))
-      (let [reference-map (apply assoc {} (interleave macro-args parts))]
-        (loop [body (apply str macro-body)
-               ref-map reference-map]
-          (if (empty? ref-map)
-            (list reference-map body)
-            (recur (string/replace body ":de-ref name" (str (first ref-map)))
-                   (rest ref-map)))))
+      (let [reference-map (apply assoc {} (interleave macro-args parts))
+            expanded-form (de-ref reference-map macro-body)]
+       (read-string expanded-form))
       nil)))
 
 (defn expand-macro [exp macros]
