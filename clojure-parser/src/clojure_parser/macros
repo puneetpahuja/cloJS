@@ -1,5 +1,6 @@
 (defmacro defn [func-name args body]
   `(def ~func-name (fn ~args ~body)))
 
-(defmacro :add [x y]
+(defmacro add [x y]
   `(+ ~x ~y))
+

@@ -3,6 +3,8 @@
 
 (def square (fn [x] (* x x)))
 
-(:add 3 4)
+(add 3 4)
+
+(+ 3 4)
 
 (square 5)

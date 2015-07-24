@@ -240,7 +240,8 @@
           (recur (rest macros) name))))))
 
 (defn is-macro? [exp]
-  (not (nil? (:defn exp))))
+  (or (not (nil? (:defn exp)))
+      (contains? exp (symbol "add"))))
 
 (defn de-ref [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
