@@ -233,15 +233,11 @@
   (loop [macros macros
          name name]
     (let [macro (first macros)]
-      (if (nil? macros)
+      (if (empty? macros)
         nil
         (if (= name (first (:defmacro macro)))
           macro
           (recur (rest macros) name))))))
-
-(defn is-macro? [exp]
-  (or (not (nil? (:defn exp)))
-      (contains? exp (symbol "add"))))
 
 (defn de-ref [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
@@ -264,11 +260,11 @@
       nil)))
 
 (defn expand-macro [exp macros]
-  (if (is-macro? exp)
-    (let [parts (first (vals exp))
-          name (find-macro macros (first (keys exp)))]
-      (de-reference name parts))
-    exp))
+  (let [parts (first (vals exp))
+        macro (find-macro macros (first (keys exp)))]
+    (if (nil? macro)
+      exp
+      (de-reference macro parts))))
 
 ;;; Main methods
 
