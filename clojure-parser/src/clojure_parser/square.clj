@@ -7,4 +7,6 @@
 
 (+ 3 4)
 
+(pipe 3 inc dec even?)
+
 (square 5)

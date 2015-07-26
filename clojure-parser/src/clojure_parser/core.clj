@@ -157,6 +157,13 @@
       [:de-ref (extract char code)]
       nil)))
 
+(defn parse-deref [code]
+  (let [for-deref (parse-tilde code)]
+    (if (nil? for-deref)
+      nil
+      (let [deref (parse-name (last for-deref))]
+        [(symbol (str ":de-ref " (first deref))) (last deref)]))))
+
 ;;; Composite parsers
 
 (defn parse-vector [code]
@@ -192,7 +199,7 @@
   (nested-parse code :expr \( \) [parse-newline
                                   parse-space
                                   parse-quote
-                                  parse-tilde
+                                  parse-deref
                                   parse-argument
                                   parse-form
                                   parse-expression]))

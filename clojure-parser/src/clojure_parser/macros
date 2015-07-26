@@ -4,3 +4,5 @@
 (defmacro add [x y]
   `(+ ~x ~y))
 
+(defmacro pipe [arg fa fb fc]
+  `(~fc (~fb (~fa ~arg))))
