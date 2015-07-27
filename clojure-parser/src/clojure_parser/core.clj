@@ -56,7 +56,7 @@
 ;;; Element parsers
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.]+[\\?]?" code)]
+  (let [identifier (re-find #"^[\w-.><=]+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -214,8 +214,21 @@
              (if (not-empty list)
                (if (= clojure.lang.LazySeq (type argument))
                  (if (= :expr (first argument))
-                   (recur (rest (rest list)) (conj arguments (mapify (rest argument)))) 
+                   (recur (rest list) (conj arguments (mapify (rest argument)))) 
                    (recur (rest list) (conj arguments (mapify argument))))
+                 (recur (rest list) (conj arguments argument)))
+               arguments)))))
+
+(defn mapize [lst]
+  (assoc {} (first lst)
+         (loop [list (rest lst)
+                arguments []]
+           (let [argument (first list)]
+             (if (not-empty list)
+               (if (= clojure.lang.LazySeq (type argument))
+                 (if (= :expr (first argument))
+                   (recur (rest list) (conj arguments (mapize (rest argument))))
+                   (recur (rest list) (conj arguments (mapize argument))))
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 

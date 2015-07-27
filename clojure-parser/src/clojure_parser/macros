@@ -7,6 +7,12 @@
 (defmacro pipe [arg fa fb fc]
   `(~fc (~fb (~fa ~arg))))
 
+(defmacro >= [x y]
+  `(or (> ~x ~y) (= ~x ~y)))
+
+(defmacro <= [x y]
+  `(or (< ~x ~y) (= ~x ~y)))
+
 (defmacro null? [arg]
   `(= ~arg null))
 
@@ -18,9 +24,3 @@
 
 (defmacro empty? [coll]
   `(not (seq ~coll)))
-
-(defmacro gte [x y]
-  `(or (> ~x ~y) (= ~x ~y)))
-
-(defmacro lte [x y]
-  `(or (< ~x ~y) (= ~x ~y)))
