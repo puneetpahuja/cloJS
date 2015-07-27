@@ -7,6 +7,6 @@
 
 (+ 3 4)
 
-(pipe 3 inc dec even?)
+(pipe 3 square inc str)
 
 (square 5)
