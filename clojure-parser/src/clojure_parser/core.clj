@@ -219,19 +219,6 @@
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
 
-(defn mapize [lst]
-  (assoc {} (first lst)
-         (loop [list (rest lst)
-                arguments []]
-           (let [argument (first list)]
-             (if (not-empty list)
-               (if (= clojure.lang.LazySeq (type argument))
-                 (if (= :expr (first argument))
-                   (recur (rest list) (conj arguments (mapize (rest argument))))
-                   (recur (rest list) (conj arguments (mapize argument))))
-                 (recur (rest list) (conj arguments argument)))
-               arguments)))))
-
 ;;; Macro expansion
 
 (defn load-macros []
