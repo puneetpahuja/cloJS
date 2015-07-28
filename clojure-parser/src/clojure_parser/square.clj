@@ -7,4 +7,6 @@
 
 (>= 3 4)
 
-(pipe 4 inc square str)
+(>= 5 6)
+
+(>> 4 inc square str)
