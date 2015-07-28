@@ -1,9 +1,6 @@
 (defmacro defn [func-name args body]
   `(def ~func-name (fn ~args ~body)))
 
-(defmacro add [x y]
-  `(+ ~x ~y))
-
 (defmacro >> [arg func1 func2 func3]
   `(~func3 (~func2 (~func1 arg))))
 
@@ -24,3 +21,6 @@
 
 (defmacro empty? [coll]
   `(not (seq ~coll)))
+
+(defmacro test [arg & body]
+  `(test ~arg ~@body))

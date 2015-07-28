@@ -56,7 +56,7 @@
 ;;; Element parsers
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.><=]+[\\?]?" code)]
+  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -157,6 +157,11 @@
       [:de-ref (extract char code)]
       nil)))
 
+(defn parse-ampersand [code]
+  (let [char (first code)]
+    (if (= \& char)
+      [(symbol (str char)) (extract char code)])))
+
 (defn parse-deref [code]
   (let [for-deref (parse-tilde code)]
     (if (nil? for-deref)
@@ -168,6 +173,7 @@
 
 (defn parse-vector [code]
   (nested-parse code  :vector \[ \] [parse-space
+                                     parse-ampersand
                                      parse-keyword
                                      parse-operator
                                      parse-number
@@ -186,6 +192,7 @@
 
 (defn parse-argument [code]
   (batch-parse code [parse-number
+                     parse-ampersand
                      parse-keyword                              
                      parse-operator
                      parse-reserved
@@ -221,20 +228,42 @@
 
 ;;; Macro expansion
 
-(defn load-macros []
-  (let [code (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros")]
-    (loop [expression (first (parse-expression code))
-           remainder (apply str (rest (parse-expression code)))
-           tree []]
-      (if (empty? remainder)
-        (conj tree (mapify (rest expression)))
-        (if (not= \(  (first remainder))
-          (recur expression
-                 (rest remainder)
-                 tree)
-          (recur (first (parse-expression remainder))
-                 (apply str (rest (parse-expression remainder)))
-                 (conj tree (mapify (rest expression)))))))))
+(defn bind-args [macro-args args]
+  (apply assoc {} (interleave macro-args args)))
+
+(defn and-expand [macro-args]
+  (if (= (symbol "&") (last (butlast macro-args)))
+    (let [and-term (symbol (apply str (conj (seq (str (last macro-args))) \@)))]
+      (conj (vec (butlast (butlast macro-args))) and-term))
+    macro-args))
+
+(defn bind [macro-args args]
+  (loop [macro-args macro-args
+         args args
+         accumalator []]
+    (if (empty? macro-args)
+      (if (empty? args)
+        (apply assoc {} accumalator)
+        (let [last-key (last (butlast accumalator))
+              last-value (last accumalator)]
+          (assoc (apply assoc {} accumalator) last-key (conj args last-value))))
+      (recur (rest macro-args)
+             (rest args)
+             (conj accumalator (first macro-args) (first args))))))
+
+(defn load-macros [code]
+  (loop [expression (first (parse-expression code))
+         remainder (apply str (rest (parse-expression code)))
+         tree []]
+    (if (empty? remainder)
+      (conj tree (mapify (rest expression)))
+      (if (not= \(  (first remainder))
+        (recur expression
+               (rest remainder)
+               tree)
+        (recur (first (parse-expression remainder))
+               (apply str (rest (parse-expression remainder)))
+               (conj tree (mapify (rest expression))))))))
 
 (defn find-macro [macros name]
   (loop [macros macros
@@ -258,13 +287,11 @@
                                (str ((first keys) refs))))))))
 
 (defn de-reference [macro parts]
-  (let [macro-args (map keyword (:vector (second (:defmacro macro))))
-        macro-body (last (:defmacro macro))]
-    (if (= (count macro-args) (count parts))
-      (let [reference-map (apply assoc {} (interleave macro-args parts))
-            expanded-form (de-ref reference-map macro-body)]
-       (read-string expanded-form))
-      nil)))
+  (let [macro-args (map keyword (map str (and-expand (:vector (second (:defmacro macro))))))
+        macro-body (last (:defmacro macro))
+        reference-map (bind macro-args parts)
+        expanded-form (de-ref reference-map macro-body)]
+      (read-string expanded-form)))
 
 (defn expand-macro [exp macros]
   (let [parts (first (vals exp))
@@ -278,7 +305,7 @@
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
-   (let [macros (load-macros)]
+   (let [macros (load-macros (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros"))]
      (loop [expression (first (parse-expression code))
             remainder (apply str (rest (parse-expression code)))
             tree []]
