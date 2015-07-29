@@ -5,6 +5,4 @@
 
 (square 5)
 
-(>= 3 4)
-
-(pipe 4 inc square str)
+(test "x" y z)
