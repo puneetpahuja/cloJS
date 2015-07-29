@@ -5,4 +5,4 @@
 
 (square 5)
 
-(test "y" y z)
+(test "x" y z)

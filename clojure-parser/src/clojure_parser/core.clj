@@ -193,14 +193,13 @@
 (defn parse-argument [code]
   (batch-parse code [parse-number
                      parse-ampersand
-                     parse-keyword                              
+                     parse-keyword
                      parse-operator
                      parse-reserved
                      parse-name
                      parse-string
                      parse-vector
                      parse-boolean]))
-
 
 (defn parse-expression [code]
   (nested-parse code :expr \( \) [parse-newline
