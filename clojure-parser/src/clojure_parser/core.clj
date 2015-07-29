@@ -280,10 +280,17 @@
            deref-string deref-string]
       (if (empty? keys)
         deref-string
-        (recur (rest keys)
+        (if (some #(= \@ %) (seq (str (first keys))))
+          (recur (rest keys)
                (string/replace deref-string
                                (re-pattern (str ":de-ref " (name (first keys))))
-                               (str ((first keys) refs))))))))
+                               (subs (str ((first keys) refs))
+                                     1
+                                     (dec (count (str ((first keys) refs)))))))
+          (recur (rest keys)
+                 (string/replace deref-string
+                                 (re-pattern (str ":de-ref " (name (first keys))))
+                                 (str ((first keys) refs)))))))))
 
 (defn de-reference [macro parts]
   (let [macro-args (map keyword (map str (and-expand (:vector (second (:defmacro macro))))))
