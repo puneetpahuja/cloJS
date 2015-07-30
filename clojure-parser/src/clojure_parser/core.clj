@@ -172,7 +172,7 @@
 ;;; Composite parsers
 
 (defn parse-vector [code]
-  (nested-parse code  :vector \[ \] [parse-space
+  (nested-parse code :vector \[ \] [parse-space
                                      parse-ampersand
                                      parse-keyword
                                      parse-operator

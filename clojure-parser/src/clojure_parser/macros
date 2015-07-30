@@ -23,4 +23,4 @@
   `(not (seq ~coll)))
 
 (defmacro test [arg & body]
-  `(test ~arg ~@body))
+  `(test ~arg (inner ~@body)))
