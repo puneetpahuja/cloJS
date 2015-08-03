@@ -311,19 +311,28 @@
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
-   (let [macros (load-macros (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros"))]
      (loop [expression (first (parse-expression code))
             remainder (apply str (rest (parse-expression code)))
-            tree []]
+            tree []
+            macros (load-macros (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros"))]
        (if (empty? remainder)
-         (conj tree (expand-macro (mapify (rest expression)) macros))
+         (if (= :defmacro (second expression))
+           (conj macros (mapify (rest expression)))
+           (conj tree (expand-macro (mapify (rest expression)) macros)))
          (if (not= \(  (first remainder))
            (recur expression
                   (rest remainder)
-                  tree)
-           (recur (first (parse-expression remainder))
-                  (apply str (rest (parse-expression remainder)))
-                  (conj tree (expand-macro (mapify (rest expression)) macros)))))))))
+                  tree
+                  macros)
+           (if (= :defmacro (second expression))
+             (recur (first (parse-expression remainder))
+                    (apply str (rest (parse-expression remainder)))
+                    tree
+                    (conj macros (mapify (rest expression))))
+             (recur (first (parse-expression remainder))
+                    (apply str (rest (parse-expression remainder)))
+                    (conj tree (expand-macro (mapify (rest expression)) macros))
+                    macros)))))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."
