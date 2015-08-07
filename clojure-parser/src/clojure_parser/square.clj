@@ -8,4 +8,4 @@
 (defmacro test [arg & body]
   `(test ~arg (inner ~@body)))
 
-(test 1 2 3 4)
+(test "a" 2 "3" 4)
