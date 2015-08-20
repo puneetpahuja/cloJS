@@ -5,7 +5,9 @@
 
 (square 5)
 
-(defmacro test [arg & body]
-  `(test ~arg (inner ~@body)))
+(defmacro domonad [bindings & body]
+  `(m-bind ~bindings (m-result ~@body)))
 
-(test "a" 2 "3" 4)
+(domonad
+  [bindings]
+  (body))

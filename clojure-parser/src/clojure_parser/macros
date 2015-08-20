@@ -22,3 +22,9 @@
 (defmacro empty? [coll]
   `(not (seq ~coll)))
 
+(defmacro domonad [args & body]
+  `(m-bind (binding-1)
+     (fn [arg-1]
+       (m-bind (binding-2)
+         (fn [arg-2]
+           (m-result y)))))) 

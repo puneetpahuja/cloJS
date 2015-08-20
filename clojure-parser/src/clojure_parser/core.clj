@@ -3,6 +3,8 @@
 
 (require '[clojure.string :as string])
 
+(require '(clojure.algo.monads))
+
 (declare concrete-to-abstract parse-expression ast cst)
 
 ;;; Utility methods 
@@ -173,16 +175,16 @@
 
 (defn parse-vector [code]
   (nested-parse code :vector \[ \] [parse-space
-                                     parse-ampersand
-                                     parse-keyword
-                                     parse-operator
-                                     parse-number
-                                     parse-name
-                                     parse-string
-                                     parse-boolean
-                                     parse-reserved
-                                     parse-expression
-                                     parse-vector]))
+                                    parse-ampersand
+                                    parse-keyword
+                                    parse-operator
+                                    parse-number
+                                    parse-name
+                                    parse-string
+                                    parse-boolean
+                                    parse-reserved
+                                    parse-expression
+                                    parse-vector]))
 
 (defn parse-form [code]
   (batch-parse code [parse-keyword
