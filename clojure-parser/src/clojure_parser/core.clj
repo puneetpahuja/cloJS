@@ -1,11 +1,11 @@
 (ns clojure-parser.core
+  (:use [clojure.algo.monads :only [domonad with-monad state-t maybe-m
+  fetch-state set-state m-seq m-plus m-result]])
   (:gen-class))
 
 (require '[clojure.string :as string])
 
-(require '(clojure.algo.monads))
-
-(declare concrete-to-abstract parse-expression ast cst)
+(declare concrete-to-abstract parse-expression ast cst parse-vector)
 
 ;;; Utility methods 
 
@@ -147,6 +147,12 @@
       [char (extract char code)]
       nil)))
 
+(defn parse-close-square-bracket [code]
+  (let [char (first code)]
+    (if (= \] char)
+      [char (extract char code)]
+      nil)))
+
 (defn parse-quote [code]
   (let [char (first code)]
     (if (= \` char)
@@ -171,7 +177,7 @@
       (let [deref (parse-name (last for-deref))]
         [(symbol (str ":de-ref " (first deref))) (last deref)]))))
 
-;;; Composite parsers
+;;; Refactoring
 
 (defn parse-vector [code]
   (nested-parse code :vector \[ \] [parse-space
@@ -185,6 +191,95 @@
                                     parse-reserved
                                     parse-expression
                                     parse-vector]))
+
+;;; Parser monad
+
+(def parser-m (state-t maybe-m))
+
+(with-monad parser-m
+  ;; Parser combinators
+
+  (defn optional
+    "Take a parser and return an optional version of it."
+    [parser]
+    (m-plus parser (m-result nil)))
+
+  (defn one-or-more
+    "Matches the same parser repeatedly until it fails - the first time has
+  to succeed for the parser to progress"
+    [parser]
+    (domonad [value parser
+              values (optional (one-or-more parser))]
+             (if values
+               (into [value] (flatten values))
+               [value])))
+
+  (defn none-or-more
+    "Matches the same parser repeatedly until it fails - first can fail and
+  second will continue"
+    [parser]
+    (optional (one-or-more parser)))
+
+  (defn skip-one-or-more
+    "Matches the parser on or more times until it fails, but doesn't return
+  the values for binding"
+    [parser]
+    (domonad
+     [_ parser
+      _ (optional (skip-one-or-more parser))]
+     true))
+
+  (defn skip-none-or-more
+     "Matches the same parser zero or more times until it fails,
+     then returns true."
+     [parser]
+     (optional (skip-one-or-more parser)))
+
+  (defn match-one
+    "Match at least one of the parsers in the given order, or fail"
+    [& parsers]
+    (reduce m-plus parsers))
+
+  (defn match-all
+    "Match all the given parsers, or fail"
+    [& parsers]
+    (m-bind (m-seq parsers)
+            (comp m-result flatten))))
+
+(with-monad parser-m
+  ;; Combined parsers
+
+  (def m-form
+    (domonad
+     [name (match-one parse-keyword
+                      parse-reserved
+                      parse-operator
+                      parse-name)]
+     name))
+
+  (def m-argument
+    (domonad
+     [arg (match-one parse-number
+                     parse-ampersand
+                     parse-keyword
+                     parse-operator
+                     parse-reserved
+                     parse-name
+                     parse-string
+                     parse-vector
+                     parse-boolean)]
+     arg))
+
+  (def m-vector
+    (domonad
+     [opening-bracket (match-one parse-square-bracket)
+      elements (one-or-more (match-one m-argument
+                                       (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-square-bracket)]
+     {:vector elements})))
+
+;;; Composite parsers
+
 
 (defn parse-form [code]
   (batch-parse code [parse-keyword
