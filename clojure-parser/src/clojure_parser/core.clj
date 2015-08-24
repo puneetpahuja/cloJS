@@ -5,7 +5,7 @@
 
 (require '[clojure.string :as string])
 
-(declare concrete-to-abstract parse-expression ast cst parse-vector)
+(declare concrete-to-abstract parse-expression ast cst  m-argument m-parse-vector)
 
 ;;; Utility methods 
 
@@ -153,6 +153,18 @@
       [char (extract char code)]
       nil)))
 
+(defn parse-round-bracket [code]
+  (let [char (first code)]
+    (if (= \( char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-close-round-bracket [code]
+  (let [char (first code)]
+    (if (= \) char)
+      [char (extract char code)]
+      nil)))
+
 (defn parse-quote [code]
   (let [char (first code)]
     (if (= \` char)
@@ -220,6 +232,16 @@
     [parser]
     (optional (one-or-more parser)))
 
+  (defn nested-one-or-more
+    "Matches the same parser repeatedly until it fails - the first time has
+  to succeed for the parser to progress"
+    [parser]
+    (domonad [value parser
+              values (optional (nested-one-or-more parser))]
+             (if values
+               (into [value] values)
+               [value])))
+
   (defn skip-one-or-more
     "Matches the parser on or more times until it fails, but doesn't return
   the values for binding"
@@ -246,9 +268,8 @@
     (m-bind (m-seq parsers)
             (comp m-result flatten))))
 
-(with-monad parser-m
   ;; Combined parsers
-
+(with-monad parser-m
   (def m-form
     (domonad
      [name (match-one parse-keyword
@@ -256,6 +277,24 @@
                       parse-operator
                       parse-name)]
      name))
+
+  (def m-parse-vector
+    (domonad
+     [opening-bracket (match-one parse-square-bracket)
+      elements (one-or-more (match-one m-argument
+                                       (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-square-bracket)]
+     (flatten (list :vector (filter #(not (= true %)) elements)))))
+
+  (def m-parse-expression
+    (domonad
+     [opening-bracket (match-one parse-round-bracket)
+      name (match-one m-form)
+      _ (optional (match-one parse-space))
+      args (nested-one-or-more  (match-one m-argument
+                                           (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-round-bracket)]
+     (list :expr name (filter #(not (= true %)) args))))
 
   (def m-argument
     (domonad
@@ -266,17 +305,10 @@
                      parse-reserved
                      parse-name
                      parse-string
-                     parse-vector
+                     m-parse-vector
+                     m-parse-expression
                      parse-boolean)]
-     arg))
-
-  (def m-vector
-    (domonad
-     [opening-bracket (match-one parse-square-bracket)
-      elements (one-or-more (match-one m-argument
-                                       (skip-one-or-more parse-space)))
-      closing-bracket (match-one parse-close-square-bracket)]
-     {:vector elements})))
+     arg)))
 
 ;;; Composite parsers
 
