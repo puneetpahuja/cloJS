@@ -294,7 +294,7 @@
       args (nested-one-or-more  (match-one m-argument
                                            (skip-one-or-more parse-space)))
       closing-bracket (match-one parse-close-round-bracket)]
-     (list :expr name (filter #(not (= true %)) args))))
+     (concat (list :expr name) (filter #(not (= true %)) args))))
 
   (def m-argument
     (domonad
@@ -341,18 +341,34 @@
 
 ;;; Formatting methods
 
-(defn mapify [lst]
-  (assoc {} (first lst) 
-         (loop [list (rest lst)
+(defn unwrap [expr]
+  (if (and (list? expr) (empty? (rest expr)))
+    (first expr)
+    expr))
+
+(defn mapify [expr]
+    (assoc {} (first expr)
+           (loop [args (rest expr)
+                  arguments []]
+             (let [argument (first args)]
+               (if (not-empty args)
+                 (if (seq? argument)
+                   (if (= :expr (first argument))
+                     (recur (rest args) (conj arguments (mapify (rest argument)))) 
+                     (recur (rest args) (conj arguments (mapify argument))))
+                   (recur (rest args) (conj arguments argument)))
+                 arguments)))))
+
+(defn napify [expr]
+  (assoc {} (first expr)
+         (loop [args (rest expr)
                 arguments []]
-           (let [argument (first list)]
-             (if (not-empty list)
-               (if (= clojure.lang.LazySeq (type argument))
-                 (if (= :expr (first argument))
-                   (recur (rest list) (conj arguments (mapify (rest argument)))) 
-                   (recur (rest list) (conj arguments (mapify argument))))
-                 (recur (rest list) (conj arguments argument)))
-               arguments)))))
+           (if (empty? args)
+             arguments
+             (let [argument (first args)]
+               (if (seq? argument)
+                 (recur (rest args) (conj arguments (napify (unwrap argument))))
+                 (recur (rest args) (conj arguments argument))))))))
 
 ;;; Macro expansion
 
@@ -380,8 +396,8 @@
              (conj accumalator (first macro-args) (first args))))))
 
 (defn load-macros [code]
-  (loop [expression (first (parse-expression code))
-         remainder (apply str (rest (parse-expression code)))
+  (loop [expression (first (m-parse-expression code))
+         remainder (apply str (rest (m-parse-expression code)))
          tree []]
     (if (empty? remainder)
       (conj tree (mapify (rest expression)))
@@ -389,8 +405,8 @@
         (recur expression
                (rest remainder)
                tree)
-        (recur (first (parse-expression remainder))
-               (apply str (rest (parse-expression remainder)))
+        (recur (first (m-parse-expression remainder))
+               (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
 (defn find-macro [macros name]
@@ -440,8 +456,8 @@
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
-     (loop [expression (first (parse-expression code))
-            remainder (apply str (rest (parse-expression code)))
+     (loop [expression (first (m-parse-expression code))
+            remainder (apply str (rest (m-parse-expression code)))
             tree []
             macros (load-macros (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros"))]
        (if (empty? remainder)
@@ -454,12 +470,12 @@
                   tree
                   macros)
            (if (= :defmacro (second expression))
-             (recur (first (parse-expression remainder))
-                    (apply str (rest (parse-expression remainder)))
+             (recur (first (m-parse-expression remainder))
+                    (apply str (rest (m-parse-expression remainder)))
                     tree
                     (conj macros (mapify (rest expression))))
-             (recur (first (parse-expression remainder))
-                    (apply str (rest (parse-expression remainder)))
+             (recur (first (m-parse-expression remainder))
+                    (apply str (rest (m-parse-expression remainder)))
                     (conj tree (expand-macro (mapify (rest expression)) macros))
                     macros)))))))
 
