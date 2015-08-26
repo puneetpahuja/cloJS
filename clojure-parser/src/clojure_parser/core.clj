@@ -275,8 +275,8 @@
     (domonad
      [name (match-one parse-keyword
                       parse-reserved
-                      parse-operator
-                      parse-name)]
+                      parse-name
+                      parse-operator)]
      name))
 
   (def m-parse-vector
@@ -292,7 +292,6 @@
      [arg (match-one parse-number
                      parse-ampersand
                      parse-keyword
-                     parse-operator
                      parse-reserved
                      parse-name
                      parse-string
@@ -302,18 +301,20 @@
 
   (def m-parse-expression
     (domonad
-     [_ (optional (match-one parse-quote))
+     [_ (optional (match-one parse-space
+                             parse-newline))
       opening-bracket (match-one parse-round-bracket)
       name (match-one m-form)
       _ (optional (match-one parse-space))
-      args (nested-one-or-more  (match-one parse-newline
-                                           parse-space
+      args (nested-one-or-more  (match-one (skip-one-or-more parse-newline)
                                            parse-quote
                                            parse-deref
                                            m-argument
                                            m-parse-expression
                                            (skip-one-or-more parse-space)))
-      closing-bracket (match-one parse-close-round-bracket)]
+      closing-bracket (match-one parse-close-round-bracket)
+      _ (optional (match-one parse-space
+                             parse-newline))]
      (concat (list :expr name) (filter #(not (= true %)) args)))))
 
 ;;; Composite parsers
@@ -386,8 +387,8 @@
              (conj accumalator (first macro-args) (first args))))))
 
 (defn load-macros [code]
-  (loop [expression (first (parse-expression code))
-         remainder (apply str (rest (parse-expression code)))
+  (loop [expression (first (m-parse-expression code))
+         remainder (apply str (rest (m-parse-expression code)))
          tree []]
     (if (empty? remainder)
       (conj tree (mapify (rest expression)))
@@ -395,8 +396,8 @@
         (recur expression
                (rest remainder)
                tree)
-        (recur (first (parse-expression remainder))
-               (apply str (rest (parse-expression remainder)))
+        (recur (first (m-parse-expression remainder))
+               (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
 (defn find-macro [macros name]

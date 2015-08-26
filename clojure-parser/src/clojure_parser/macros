@@ -1,15 +1,6 @@
 (defmacro defn [func-name args body]
   `(def ~func-name (fn ~args ~body)))
 
-(defmacro >> [arg func1 func2 func3]
-  `(~func3 (~func2 (~func1 arg))))
-
-(defmacro >= [x y]
-  `(or (> ~x ~y) (= ~x ~y)))
-
-(defmacro <= [x y]
-  `(or (< ~x ~y) (= ~x ~y)))
-
 (defmacro null? [arg]
   `(= ~arg null))
 
@@ -22,9 +13,11 @@
 (defmacro empty? [coll]
   `(not (seq ~coll)))
 
-(defmacro domonad [args & body]
-  `(m-bind (binding-1)
-     (fn [arg-1]
-       (m-bind (binding-2)
-         (fn [arg-2]
-           (m-result y)))))) 
+(defmacro >= [x y]
+  `(or (> ~x ~y) (= ~x ~y)))
+
+(defmacro <= [x y]
+  `(or (< ~x ~y) (= ~x ~y)))
+
+(defmacro >> [arg func1 func2 func3]
+  `(~func3 (~func2 (~func1 arg))))
