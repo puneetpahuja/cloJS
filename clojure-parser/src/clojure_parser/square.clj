@@ -8,6 +8,4 @@
 (defmacro domonad [bindings & body]
   `(m-bind ~bindings (m-result ~@body)))
 
-(domonad
-  [bindings]
-  (body))
+(domonad bindings body)

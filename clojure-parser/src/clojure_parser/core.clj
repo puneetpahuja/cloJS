@@ -5,7 +5,7 @@
 
 (require '[clojure.string :as string])
 
-(declare concrete-to-abstract parse-expression ast cst  m-argument m-parse-vector)
+(declare concrete-to-abstract parse-expression ast cst m-argument m-parse-vector)
 
 ;;; Utility methods 
 
@@ -268,7 +268,8 @@
     (m-bind (m-seq parsers)
             (comp m-result flatten))))
 
-  ;; Combined parsers
+;; Combined parsers
+
 (with-monad parser-m
   (def m-form
     (domonad
@@ -286,16 +287,6 @@
       closing-bracket (match-one parse-close-square-bracket)]
      (flatten (list :vector (filter #(not (= true %)) elements)))))
 
-  (def m-parse-expression
-    (domonad
-     [opening-bracket (match-one parse-round-bracket)
-      name (match-one m-form)
-      _ (optional (match-one parse-space))
-      args (nested-one-or-more  (match-one m-argument
-                                           (skip-one-or-more parse-space)))
-      closing-bracket (match-one parse-close-round-bracket)]
-     (concat (list :expr name) (filter #(not (= true %)) args))))
-
   (def m-argument
     (domonad
      [arg (match-one parse-number
@@ -306,9 +297,24 @@
                      parse-name
                      parse-string
                      m-parse-vector
-                     m-parse-expression
                      parse-boolean)]
-     arg)))
+     arg))
+
+  (def m-parse-expression
+    (domonad
+     [_ (optional (match-one parse-quote))
+      opening-bracket (match-one parse-round-bracket)
+      name (match-one m-form)
+      _ (optional (match-one parse-space))
+      args (nested-one-or-more  (match-one parse-newline
+                                           parse-space
+                                           parse-quote
+                                           parse-deref
+                                           m-argument
+                                           m-parse-expression
+                                           (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-round-bracket)]
+     (concat (list :expr name) (filter #(not (= true %)) args)))))
 
 ;;; Composite parsers
 
