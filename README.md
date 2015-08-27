@@ -29,9 +29,9 @@ Any piece of code can be represented as a tree of objects and operators and func
 Now we can hardly expect the parser to spit out an image like this - what we want is a data structure that represents this tree. In Clojure, that would be a map - of parents and children. If we look at the tree again, 
 we see that:
 
-\* has two children: 3 and + with two children
-
 \+ has two children: 5 and 2
+
+\* has two children: 3 and (+ with two children)
 
 This implies \+ could be mapped to a vector containing 5 and 2 : `{+ [5 2]}`
 \* can then be mapped to 3 and the afore-mentioned map: `{* [3 {+ [5 2]}]}`
