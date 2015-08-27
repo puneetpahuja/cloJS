@@ -20,7 +20,7 @@ In this project, parsing means converting valid Clojure code into something call
 Any piece of code can be represented as a tree of objects and operators. Here is some simple cloure code and the tree that represents it:
 
 ```clojure
-(+ 1 2)
+(* 3 (+ 5 2))
 ```
 ![alt text][ast]
 
