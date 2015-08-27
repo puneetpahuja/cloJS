@@ -35,13 +35,13 @@ we see that:
 
 This implies \+ could be mapped to a vector containing 5 and 2 : 
 
-```
+```clojure
 {+ [5 2]}
 ```
 
 \* can then be mapped to 3 and the afore-mentioned map: 
 
-```
+```clojure
 {* [3 {+ [5 2]}]}
 ```
 
@@ -53,7 +53,7 @@ So
 
 is
 
-```
+```clojure
 {* [3 {+ [5 2]}]}
 ```
 
