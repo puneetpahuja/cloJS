@@ -24,6 +24,6 @@ Any piece of code can be represented as a tree of objects and operators. Here is
 ```
 ![alt text][ast]
 
-[ast]: http://condor.depaul.edu/glancast/347class/docs/images/exp11.gif
+[ast]: http://www.codeproject.com/KB/recipes/sota_expression_evaluator/simplified_ast.png
 
 
