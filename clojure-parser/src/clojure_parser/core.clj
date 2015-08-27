@@ -20,41 +20,6 @@
     (apply str (rest code))
     (apply str (drop (count element) code))))
 
-(defn batch-parse [string functions]
-  (if (empty? functions)
-    nil
-    (let [result ((first functions) string)]
-      (if (nil? (first result))
-        (recur string (rest functions))
-        result))))
-
-(defn batch-parse [string functions]
-  (if (empty? functions)
-    nil
-    (let [result ((first functions) string)]
-      (if (nil? (first result))
-        (recur string (rest functions))
-        result))))
-
-(defn nested-parse [code-string
-                    type
-                    opening-character
-                    closing-character
-                    functions]
-  (if (= opening-character (first code-string))
-    (loop [code (apply str (rest code-string)) array [type]]
-      (if (= closing-character (first code))
-        [(filter #(not= \newline %)
-                 (filter #(nil? (re-find #"^\s+" (str %))) array))
-         (apply str (rest code))]
-        (let [result (batch-parse code functions)]
-          (if (nil? result)
-            [(filter #(not= \newline %)
-                     (filter #(nil? (re-find #"^\s+" (str %))) array))
-             (apply str (rest code))]
-            (recur (last result) (conj array (first result)))))))
-    nil))
-
 ;;; Element parsers
 
 (defn parse-identifier [code]
@@ -100,39 +65,6 @@
       (nil? boolean) nil
       (= "true" boolean) [true (extract boolean code)]
       (= "false" boolean) [false (extract boolean code)]
-      :else nil)))
-
-(defn parse-reserved [code]
-  (let [reserved-keyword (first (parse-identifier code))]
-    (cond
-      (nil? boolean) nil
-      (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
-      (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
-      (= "defmacro" reserved-keyword) [:defmacro (extract reserved-keyword code)]
-      (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
-      (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
-      (= "let" reserved-keyword) [:let (extract reserved-keyword code)]
-      (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
-      (= "atom" reserved-keyword) [:atom (extract reserved-keyword code)] 
-      (= "keyword" reserved-keyword) [:keyword (extract reserved-keyword code)]
-      (= "symbol" reserved-keyword) [:symbol (extract reserved-keyword code)]
-      (= "intern" reserved-keyword) [:intern (extract reserved-keyword code)]
-      (= "namespace" reserved-keyword) [:namespace (extract reserved-keyword code)]
-      (= "keyword?" reserved-keyword) [:keyword? (extract reserved-keyword code)]
-      (= "for" reserved-keyword) [:for (extract reserved-keyword code)]
-      (= "require" reserved-keyword) [:require (extract reserved-keyword code)]
-      :else nil)))
-
-(defn parse-operator [code]
-  (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
-    (cond
-      (= "+ " operator) [:plus (apply str (rest (rest code)))]
-      (= "- " operator) [:minus (apply str (rest (rest code)))]
-      (= "* " operator) [:multiply (apply str (rest (rest code)))]
-      (= "/ " operator) [:divide (apply str (rest (rest code)))]
-      (= "= " operator) [:equals (apply str (rest (rest code)))]
-      (= "> " operator) [:greater-than (apply str (rest (rest code)))]
-      (= "< " operator) [:less-than (apply str (rest (rest code)))]
       :else nil)))
 
 (defn parse-string [code]
@@ -189,20 +121,38 @@
       (let [deref (parse-name (last for-deref))]
         [(symbol (str ":de-ref " (first deref))) (last deref)]))))
 
-;;; Refactoring
+(defn parse-reserved [code]
+  (let [reserved-keyword (first (parse-identifier code))]
+    (cond
+      (nil? boolean) nil
+      (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
+      (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
+      (= "defmacro" reserved-keyword) [:defmacro (extract reserved-keyword code)]
+      (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
+      (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
+      (= "let" reserved-keyword) [:let (extract reserved-keyword code)]
+      (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
+      (= "atom" reserved-keyword) [:atom (extract reserved-keyword code)] 
+      (= "keyword" reserved-keyword) [:keyword (extract reserved-keyword code)]
+      (= "symbol" reserved-keyword) [:symbol (extract reserved-keyword code)]
+      (= "intern" reserved-keyword) [:intern (extract reserved-keyword code)]
+      (= "namespace" reserved-keyword) [:namespace (extract reserved-keyword code)]
+      (= "keyword?" reserved-keyword) [:keyword? (extract reserved-keyword code)]
+      (= "for" reserved-keyword) [:for (extract reserved-keyword code)]
+      (= "require" reserved-keyword) [:require (extract reserved-keyword code)]
+      :else nil)))
 
-(defn parse-vector [code]
-  (nested-parse code :vector \[ \] [parse-space
-                                    parse-ampersand
-                                    parse-keyword
-                                    parse-operator
-                                    parse-number
-                                    parse-name
-                                    parse-string
-                                    parse-boolean
-                                    parse-reserved
-                                    parse-expression
-                                    parse-vector]))
+(defn parse-operator [code]
+  (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
+    (cond
+      (= "+ " operator) [:plus (apply str (rest (rest code)))]
+      (= "- " operator) [:minus (apply str (rest (rest code)))]
+      (= "* " operator) [:multiply (apply str (rest (rest code)))]
+      (= "/ " operator) [:divide (apply str (rest (rest code)))]
+      (= "= " operator) [:equals (apply str (rest (rest code)))]
+      (= "> " operator) [:greater-than (apply str (rest (rest code)))]
+      (= "< " operator) [:less-than (apply str (rest (rest code)))]
+      :else nil)))
 
 ;;; Parser monad
 
@@ -316,35 +266,6 @@
       _ (optional (match-one parse-space
                              parse-newline))]
      (concat (list :expr name) (filter #(not (= true %)) args)))))
-
-;;; Composite parsers
-
-
-(defn parse-form [code]
-  (batch-parse code [parse-keyword
-                     parse-reserved
-                     parse-operator
-                     parse-name]))
-
-(defn parse-argument [code]
-  (batch-parse code [parse-number
-                     parse-ampersand
-                     parse-keyword
-                     parse-operator
-                     parse-reserved
-                     parse-name
-                     parse-string
-                     parse-vector
-                     parse-boolean]))
-
-(defn parse-expression [code]
-  (nested-parse code :expr \( \) [parse-newline
-                                  parse-space
-                                  parse-quote
-                                  parse-deref
-                                  parse-argument
-                                  parse-form
-                                  parse-expression]))
 
 ;;; Formatting methods
 
