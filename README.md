@@ -22,5 +22,8 @@ Any piece of code can be represented as a tree of objects and operators. Here is
 ```clojure
 (+ 1 2)
 ```
+![alt text][ast]
+
+[ast]: http://condor.depaul.edu/glancast/347class/docs/images/exp11.gif
 
 
