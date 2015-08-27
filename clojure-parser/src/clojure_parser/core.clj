@@ -5,17 +5,13 @@
 
 (require '[clojure.string :as string])
 
-(declare concrete-to-abstract parse-expression ast cst m-argument m-parse-vector)
-
 ;;; Utility methods 
-
 (defn extract [element code]
   (if (= java.lang.Character (type element))
     (apply str (rest code))
     (apply str (drop (count element) code))))
 
 ;;; Element parsers
-
 (defn parse-identifier [code]
   (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
     (if (nil? identifier)
@@ -139,21 +135,20 @@
 (defn parse-operator [code]
   (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
     (cond
-      (= "+ " operator) [:plus (apply str (rest (rest code)))]
-      (= "- " operator) [:minus (apply str (rest (rest code)))]
-      (= "* " operator) [:multiply (apply str (rest (rest code)))]
-      (= "/ " operator) [:divide (apply str (rest (rest code)))]
-      (= "= " operator) [:equals (apply str (rest (rest code)))]
-      (= "> " operator) [:greater-than (apply str (rest (rest code)))]
-      (= "< " operator) [:less-than (apply str (rest (rest code)))]
+      (= "+ " operator) [:plus (extract operator code)]
+      (= "- " operator) [:minus (extract operator code)]
+      (= "* " operator) [:multiply (extract operator code)]
+      (= "/ " operator) [:divide (extract operator code)]
+      (= "= " operator) [:equals (extract operator code)]
+      (= "> " operator) [:greater-than (extract operator code)]
+      (= "< " operator) [:less-than (extract operator code)]
       :else nil)))
 
 ;;; Parser monad
-
 (def parser-m (state-t maybe-m))
 
+;; Parser combinators
 (with-monad parser-m
-  ;; Parser combinators
 
   (defn optional
     "Take a parser and return an optional version of it."
@@ -188,7 +183,7 @@
 
   (defn skip-one-or-more
     "Matches the parser on or more times until it fails, but doesn't return
-  the values for binding"
+     the values for binding"
     [parser]
     (domonad
      [_ parser
@@ -213,9 +208,9 @@
             (comp m-result flatten))))
 
 ;; Combined parsers
-
 (with-monad parser-m
   (def m-form
+    "This matches the possible function names in an s-expression"
     (domonad
      [name (match-one parse-keyword
                       parse-reserved
@@ -223,7 +218,10 @@
                       parse-operator)]
      name))
 
+  (declare m-argument)
+
   (def m-parse-vector
+    "This matches vectors"
     (domonad
      [opening-bracket (match-one parse-square-bracket)
       elements (one-or-more (match-one m-argument
@@ -232,6 +230,7 @@
      (flatten (list :vector (filter #(not (= :skip %)) elements)))))
 
   (def m-argument
+    "Matches the possible arguments of an s-expression"
     (domonad
      [arg (match-one parse-number
                      parse-ampersand
@@ -244,6 +243,7 @@
      arg))
 
   (def m-parse-expression
+    "Matches s-expressions"
     (domonad
      [_ (optional (match-one parse-space
                              parse-newline))
@@ -262,8 +262,9 @@
      (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
 ;;; Formatting methods
-
-(defn mapify [lst]
+(defn mapify 
+  "Takes an s-expression and returns a map of form-name to a vector of form-arguments"
+  [lst]
   (assoc {} (first lst)
          (loop [list (rest lst)
                 arguments []]
@@ -277,17 +278,22 @@
                arguments)))))
 
 ;;; Macro expansion
-
-(defn bind-args [macro-args args]
+(defn bind-args 
+  "Helper function to bind"
+  [macro-args args]
   (apply assoc {} (interleave macro-args args)))
 
-(defn and-expand [macro-args]
+(defn and-expand 
+  "Expands and splices in variable number of expressions in the macro-args"
+  [macro-args]
   (if (= (symbol "&") (last (butlast macro-args)))
     (let [and-term (symbol (apply str (conj (seq (str (last macro-args))) \@)))]
       (conj (vec (butlast (butlast macro-args))) and-term))
     macro-args))
 
-(defn bind [macro-args args]
+(defn bind 
+  "Returns a map of the args in to the bindings in the macro definition"
+  [macro-args args]
   (loop [macro-args macro-args
          args args
          accumalator []]
@@ -301,7 +307,9 @@
              (rest args)
              (conj accumalator (first macro-args) (first args))))))
 
-(defn load-macros [code]
+(defn load-macros 
+  "Adds macros from a string of code to the macro tree"
+  [code]
   (loop [expression (first (m-parse-expression code))
          remainder (apply str (rest (m-parse-expression code)))
          tree []]
@@ -315,7 +323,9 @@
                (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
-(defn find-macro [macros name]
+(defn find-macro 
+  "Checks if the given name is a macro, returns the macro tree"
+  [macros name]
   (loop [macros macros
          name name]
     (let [macro (first macros)]
@@ -325,7 +335,9 @@
           macro
           (recur (rest macros) name))))))
 
-(defn de-ref [refs body]
+(defn de-ref 
+  "Helper function for de-reference"
+  [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
     (loop [keys (keys refs)
            deref-string deref-string]
@@ -343,14 +355,18 @@
                                  (re-pattern (str ":de-ref " (name (first keys))))
                                  (str ((first keys) refs)))))))))
 
-(defn de-reference [macro parts]
+(defn de-reference 
+  "Returns the macro body with the place-holders replaced by the final values"
+  [macro parts]
   (let [macro-args (map keyword (map str (and-expand (:vector (second (:defmacro macro))))))
         macro-body (last (:defmacro macro))
         reference-map (bind macro-args parts)
         expanded-form (de-ref reference-map macro-body)]
       (read-string expanded-form)))
 
-(defn expand-macro [exp macros]
+(defn expand-macro 
+  "If the supplied expression is a macro, returns the expanded form"
+  [exp macros]
   (let [parts (first (vals exp))
         macro (find-macro macros (first (keys exp)))]
     (if (nil? macro)
@@ -358,7 +374,6 @@
       (de-reference macro parts))))
 
 ;;; Main methods
-
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
