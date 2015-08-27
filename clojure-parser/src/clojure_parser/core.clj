@@ -199,7 +199,7 @@
     (domonad
      [_ parser
       _ (optional (skip-one-or-more parser))]
-     true))
+     :skip))
 
   (defn skip-none-or-more
      "Matches the same parser zero or more times until it fails,
@@ -235,7 +235,7 @@
       elements (one-or-more (match-one m-argument
                                        (skip-one-or-more parse-space)))
       closing-bracket (match-one parse-close-square-bracket)]
-     (flatten (list :vector (filter #(not (= true %)) elements)))))
+     (flatten (list :vector (filter #(not (= :skip %)) elements)))))
 
   (def m-argument
     (domonad
@@ -265,7 +265,7 @@
       closing-bracket (match-one parse-close-round-bracket)
       _ (optional (match-one parse-space
                              parse-newline))]
-     (concat (list :expr name) (filter #(not (= true %)) args)))))
+     (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
 ;;; Formatting methods
 
