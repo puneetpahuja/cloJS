@@ -5,9 +5,15 @@
 
 (square 5)
 
-(null? 3 2)
+(null? 3 [1 2])
 
-(defmacro domonad [bindings & body]
-  `(m-bind ~bindings (m-result ~@body)))
+(defmacro defmonad [name mbind mresult]
+  `(def ~name (list ~mbind ~mresult)))
 
-(domonad bindings body1 body2)
+(defmonad identity
+  (fn [mv mf] (mf mv))
+  (fn [x] x))
+
+
+
+
