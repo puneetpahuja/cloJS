@@ -31,7 +31,7 @@ we see that:
 
 \+ has two children: 5 and 2
 
-\* has two children: 3 and \+; with two children 5 and 2
+\* has two children: 3, and \+ with two children 5 and 2
 
 This implies \+ could be mapped to a vector containing 5 and 2 : 
 
