@@ -17,7 +17,7 @@ In this project, parsing means converting valid Clojure code into something call
 
 [Abstract Syntax Tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 
-Any piece of code can be represented as a tree of objects and operators and functions. Here is some simple cloure code and the tree that represents it:
+Any piece of code can be represented as a tree of objects and operators and functions. Here is some simple clojure code and the tree that represents it:
 
 ```clojure
 (* 3 (+ 5 2))
