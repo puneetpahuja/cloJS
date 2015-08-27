@@ -5,7 +5,15 @@
 
 (square 5)
 
-(defmacro test [arg & body]
-  `(test ~arg (inner ~@body)))
+(null? 3 [1 2])
 
-(test "a" 2 "3" 4)
+(defmacro defmonad [name mbind mresult]
+  `(def ~name (list ~mbind ~mresult)))
+
+(defmonad identity
+  (fn [mv mf] (mf mv))
+  (fn [x] x))
+
+
+
+

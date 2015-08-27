@@ -1,9 +1,11 @@
 (ns clojure-parser.core
+  (:use [clojure.algo.monads :only [domonad with-monad state-t maybe-m
+  fetch-state set-state m-seq m-plus m-result]])
   (:gen-class))
 
 (require '[clojure.string :as string])
 
-(declare concrete-to-abstract parse-expression ast cst)
+(declare concrete-to-abstract parse-expression ast cst m-argument m-parse-vector)
 
 ;;; Utility methods 
 
@@ -17,41 +19,6 @@
   (if (= java.lang.Character (type element))
     (apply str (rest code))
     (apply str (drop (count element) code))))
-
-(defn batch-parse [string functions]
-  (if (empty? functions)
-    nil
-    (let [result ((first functions) string)]
-      (if (nil? (first result))
-        (recur string (rest functions))
-        result))))
-
-(defn batch-parse [string functions]
-  (if (empty? functions)
-    nil
-    (let [result ((first functions) string)]
-      (if (nil? (first result))
-        (recur string (rest functions))
-        result))))
-
-(defn nested-parse [code-string
-                    type
-                    opening-character
-                    closing-character
-                    functions]
-  (if (= opening-character (first code-string))
-    (loop [code (apply str (rest code-string)) array [type]]
-      (if (= closing-character (first code))
-        [(filter #(not= \newline %)
-                 (filter #(nil? (re-find #"^\s+" (str %))) array))
-         (apply str (rest code))]
-        (let [result (batch-parse code functions)]
-          (if (nil? result)
-            [(filter #(not= \newline %)
-                     (filter #(nil? (re-find #"^\s+" (str %))) array))
-             (apply str (rest code))]
-            (recur (last result) (conj array (first result)))))))
-    nil))
 
 ;;; Element parsers
 
@@ -100,6 +67,60 @@
       (= "false" boolean) [false (extract boolean code)]
       :else nil)))
 
+(defn parse-string [code]
+  (let [string (last (re-find #"^\"([^\"]*)\"" code))]
+    (if (nil? string) 
+      nil
+      [string (apply str (drop (+ 2 (count string)) code))])))
+
+(defn parse-square-bracket [code]
+  (let [char (first code)]
+    (if (= \[ char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-close-square-bracket [code]
+  (let [char (first code)]
+    (if (= \] char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-round-bracket [code]
+  (let [char (first code)]
+    (if (= \( char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-close-round-bracket [code]
+  (let [char (first code)]
+    (if (= \) char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-quote [code]
+  (let [char (first code)]
+    (if (= \` char)
+      [:macro-body (extract char code)]
+      nil)))
+
+(defn parse-tilde [code]
+  (let [char (first code)]
+    (if (= \~ char)
+      [:de-ref (extract char code)]
+      nil)))
+
+(defn parse-ampersand [code]
+  (let [char (first code)]
+    (if (= \& char)
+      [(symbol (str char)) (extract char code)])))
+
+(defn parse-deref [code]
+  (let [for-deref (parse-tilde code)]
+    (if (nil? for-deref)
+      nil
+      (let [deref (parse-name (last for-deref))]
+        [(symbol (str ":de-ref " (first deref))) (last deref)]))))
+
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
     (cond
@@ -133,94 +154,130 @@
       (= "< " operator) [:less-than (apply str (rest (rest code)))]
       :else nil)))
 
-(defn parse-string [code]
-  (let [string (last (re-find #"^\"([^\"]*)\"" code))]
-    (if (nil? string) 
-      nil
-      [string (apply str (drop (+ 2 (count string)) code))])))
+;;; Parser monad
 
-(defn parse-square-bracket [code]
-  (let [char (first code)]
-    (if (= \[ char)
-      [char (extract char code)]
-      nil)))
+(def parser-m (state-t maybe-m))
 
-(defn parse-quote [code]
-  (let [char (first code)]
-    (if (= \` char)
-      [:macro-body (extract char code)]
-      nil)))
+(with-monad parser-m
+  ;; Parser combinators
 
-(defn parse-tilde [code]
-  (let [char (first code)]
-    (if (= \~ char)
-      [:de-ref (extract char code)]
-      nil)))
+  (defn optional
+    "Take a parser and return an optional version of it."
+    [parser]
+    (m-plus parser (m-result nil)))
 
-(defn parse-ampersand [code]
-  (let [char (first code)]
-    (if (= \& char)
-      [(symbol (str char)) (extract char code)])))
+  (defn one-or-more
+    "Matches the same parser repeatedly until it fails - the first time has
+  to succeed for the parser to progress"
+    [parser]
+    (domonad [value parser
+              values (optional (one-or-more parser))]
+             (if values
+               (into [value] (flatten values))
+               [value])))
 
-(defn parse-deref [code]
-  (let [for-deref (parse-tilde code)]
-    (if (nil? for-deref)
-      nil
-      (let [deref (parse-name (last for-deref))]
-        [(symbol (str ":de-ref " (first deref))) (last deref)]))))
+  (defn none-or-more
+    "Matches the same parser repeatedly until it fails - first can fail and
+  second will continue"
+    [parser]
+    (optional (one-or-more parser)))
 
-;;; Composite parsers
+  (defn nested-one-or-more
+    "Matches the same parser repeatedly until it fails - the first time has
+  to succeed for the parser to progress"
+    [parser]
+    (domonad [value parser
+              values (optional (nested-one-or-more parser))]
+             (if values
+               (into [value] values)
+               [value])))
 
-(defn parse-vector [code]
-  (nested-parse code :vector \[ \] [parse-space
-                                     parse-ampersand
-                                     parse-keyword
-                                     parse-operator
-                                     parse-number
-                                     parse-name
-                                     parse-string
-                                     parse-boolean
-                                     parse-reserved
-                                     parse-expression
-                                     parse-vector]))
+  (defn skip-one-or-more
+    "Matches the parser on or more times until it fails, but doesn't return
+  the values for binding"
+    [parser]
+    (domonad
+     [_ parser
+      _ (optional (skip-one-or-more parser))]
+     true))
 
-(defn parse-form [code]
-  (batch-parse code [parse-keyword
-                     parse-reserved
-                     parse-operator
-                     parse-name]))
+  (defn skip-none-or-more
+     "Matches the same parser zero or more times until it fails,
+     then returns true."
+     [parser]
+     (optional (skip-one-or-more parser)))
 
-(defn parse-argument [code]
-  (batch-parse code [parse-number
+  (defn match-one
+    "Match at least one of the parsers in the given order, or fail"
+    [& parsers]
+    (reduce m-plus parsers))
+
+  (defn match-all
+    "Match all the given parsers, or fail"
+    [& parsers]
+    (m-bind (m-seq parsers)
+            (comp m-result flatten))))
+
+;; Combined parsers
+
+(with-monad parser-m
+  (def m-form
+    (domonad
+     [name (match-one parse-keyword
+                      parse-reserved
+                      parse-name
+                      parse-operator)]
+     name))
+
+  (def m-parse-vector
+    (domonad
+     [opening-bracket (match-one parse-square-bracket)
+      elements (one-or-more (match-one m-argument
+                                       (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-square-bracket)]
+     (flatten (list :vector (filter #(not (= true %)) elements)))))
+
+  (def m-argument
+    (domonad
+     [arg (match-one parse-number
                      parse-ampersand
                      parse-keyword
-                     parse-operator
                      parse-reserved
                      parse-name
                      parse-string
-                     parse-vector
-                     parse-boolean]))
+                     m-parse-vector
+                     parse-boolean)]
+     arg))
 
-(defn parse-expression [code]
-  (nested-parse code :expr \( \) [parse-newline
-                                  parse-space
-                                  parse-quote
-                                  parse-deref
-                                  parse-argument
-                                  parse-form
-                                  parse-expression]))
+  (def m-parse-expression
+    (domonad
+     [_ (optional (match-one parse-space
+                             parse-newline))
+      opening-bracket (match-one parse-round-bracket)
+      name (match-one m-form)
+      _ (optional (match-one parse-space))
+      args (nested-one-or-more  (match-one (skip-one-or-more parse-newline)
+                                           parse-quote
+                                           parse-deref
+                                           m-argument
+                                           m-parse-expression
+                                           (skip-one-or-more parse-space)))
+      closing-bracket (match-one parse-close-round-bracket)
+      _ (optional (match-one parse-space
+                             parse-newline))]
+     (concat (list :expr name) (filter #(not (= true %)) args)))))
 
 ;;; Formatting methods
 
 (defn mapify [lst]
-  (assoc {} (first lst) 
+  (assoc {} (first lst)
          (loop [list (rest lst)
                 arguments []]
            (let [argument (first list)]
              (if (not-empty list)
                (if (= clojure.lang.LazySeq (type argument))
                  (if (= :expr (first argument))
-                   (recur (rest list) (conj arguments (mapify (rest argument)))) 
+                   (recur (rest list) (conj arguments (mapify (rest argument))))
                    (recur (rest list) (conj arguments (mapify argument))))
                  (recur (rest list) (conj arguments argument)))
                arguments)))))
@@ -251,8 +308,8 @@
              (conj accumalator (first macro-args) (first args))))))
 
 (defn load-macros [code]
-  (loop [expression (first (parse-expression code))
-         remainder (apply str (rest (parse-expression code)))
+  (loop [expression (first (m-parse-expression code))
+         remainder (apply str (rest (m-parse-expression code)))
          tree []]
     (if (empty? remainder)
       (conj tree (mapify (rest expression)))
@@ -260,8 +317,8 @@
         (recur expression
                (rest remainder)
                tree)
-        (recur (first (parse-expression remainder))
-               (apply str (rest (parse-expression remainder)))
+        (recur (first (m-parse-expression remainder))
+               (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
 (defn find-macro [macros name]
@@ -311,8 +368,8 @@
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
-     (loop [expression (first (parse-expression code))
-            remainder (apply str (rest (parse-expression code)))
+     (loop [expression (first (m-parse-expression code))
+            remainder (apply str (rest (m-parse-expression code)))
             tree []
             macros (load-macros (slurp "/home/ramshreyas/Dev/clojure/seqingclojure/clojure-parser/src/clojure_parser/macros"))]
        (if (empty? remainder)
@@ -325,12 +382,12 @@
                   tree
                   macros)
            (if (= :defmacro (second expression))
-             (recur (first (parse-expression remainder))
-                    (apply str (rest (parse-expression remainder)))
+             (recur (first (m-parse-expression remainder))
+                    (apply str (rest (m-parse-expression remainder)))
                     tree
                     (conj macros (mapify (rest expression))))
-             (recur (first (parse-expression remainder))
-                    (apply str (rest (parse-expression remainder)))
+             (recur (first (m-parse-expression remainder))
+                    (apply str (rest (m-parse-expression remainder)))
                     (conj tree (expand-macro (mapify (rest expression)) macros))
                     macros)))))))
 
