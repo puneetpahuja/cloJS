@@ -54,7 +54,7 @@ So
 is
 
 ```
-{* [3 {+ [5 2] } ] }
+{* [3 {+ [5 2]}]}
 ```
 
 OK. So we are going to write a Clojure program that takes such simple Clojure code as an input, and returns a map like the one above as the output. 
