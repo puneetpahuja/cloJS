@@ -33,8 +33,17 @@ we see that:
 
 \* has two children: 3 and \+ with two children 5 and 2
 
-This implies \+ could be mapped to a vector containing 5 and 2 : `{+ [5 2]}`
-\* can then be mapped to 3 and the afore-mentioned map: `{* [3 {+ [5 2]}]}`
+This implies \+ could be mapped to a vector containing 5 and 2 : 
+
+```
+{+ [5 2]}
+```
+
+\* can then be mapped to 3 and the afore-mentioned map: 
+
+```
+{* [3 {+ [5 2]}]}
+```
 
 So 
 
@@ -44,4 +53,6 @@ So
 
 is
 
-`{* [3 {+ [5 2] } ] }`
+```
+{* [3 {+ [5 2] } ] }
+```
