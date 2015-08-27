@@ -1,4 +1,4 @@
-# seqingclojure
+# seqing clojure
 Learning Clojure by writing a Clojure parser. In Clojure.
 
 ### Introduction ###
@@ -13,4 +13,14 @@ GeekSkool is an intensive 3-month programme where programmers come to improve th
 
 So we're going to learn Clojure by 'parsing' Clojure, using Clojure. But what exactly do we mean by 'parsing'? 
 
-In this project, parsing means converting valid Clojure code into something called an *Abstract Syntax Tree*, or AST for short.
+In this project, parsing means converting valid Clojure code into something called an *[Abstract Syntax Tree][]*, or AST for short.
+
+[Abstract Syntax Tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
+
+Any piece of code can be represented as a tree of objects and operators. Here is some simple cloure code and the tree that represents it:
+
+```clojure
+(+ 1 2)
+```
+
+
