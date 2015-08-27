@@ -30,6 +30,7 @@ Now we can hardly expect the parser to spit out an image like this - what we wan
 we see that:
 
 \* has two children: 3 and + with two children
+
 \+ has two children: 5 and 2
 
 This implies \+ could be mapped to a vector containing 5 and 2 : `{+ [5 2]}`
