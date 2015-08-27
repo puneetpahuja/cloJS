@@ -9,12 +9,6 @@
 
 ;;; Utility methods 
 
-(defn not-nil? [element]
-  (not (nil? element)))
-
-(defn not-empty? [list]
-  (not (empty? list)))
-
 (defn extract [element code]
   (if (= java.lang.Character (type element))
     (apply str (rest code))
