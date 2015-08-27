@@ -7,7 +7,7 @@ So you want to learn Clojure? Parse it. In Clojure. At least that's how we do th
 
 [GeekSkool]: http://geekskool.com
 
-GeekSkool is an intensive 3-month programme where programmers come to improve their skills. The preferred way that [Santosh Rajan][], the founder of GeekSkool, likes to do this is by throwing seemingly daunting challenges at the unsuspecting student. 
+GeekSkool is an intensive 3-month programme where programmers come to improve their skills. The preferred way that [Santosh Rajan][], the founder of GeekSkool, likes to do this is by throwing daunting challenges at the unsuspecting student. 
 
 [Santosh Rajan]: https://twitter.com/santoshrajan
 
