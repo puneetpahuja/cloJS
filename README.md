@@ -253,6 +253,6 @@ We can easily chain a series of mathematical functions such as these without won
 
 [rube-goldberg]: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
 
-[txt][math]
+![txt][math]
 
 [math]: https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSzkS0qcrsBtSgZH_tlPadeRveBd_lm3UvMTD1Uxps7AppMt71Z
