@@ -33,7 +33,7 @@ we see that:
 
 \* has two children: 3, and \+ with two children 5 and 2
 
-This implies \+ could be mapped to a vector containing 5 and 2 (vector because there is an implicit order to the children, and also the clojure convention is to put arguments in vectors): 
+This implies \+ could be mapped to a vector containing 5 and 2 (vector because there is an implicit order to the children, and also the Clojure convention is to put arguments in vectors): 
 
 ```clojure
 {+ [5 2]}
