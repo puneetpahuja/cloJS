@@ -129,4 +129,67 @@ This is what it looks like in poorly written, non-idiomatic Clojure:
       nil
       [space (extract space code)])))
 ```
+'Extract' here is a helper function that does exactly what it says on the tin.
+
+Similarly,
+
+```clojure
+(defn parse-newline [code]                                                                                                                                              
+    (if (= \newline (first code))                                                                                                                                       
+      [\newline (apply str (rest code))]                                                                                                                                
+      nil))
+
+(defn parse-number [code]
+  (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
+    (if (nil? number)
+      nil
+      [(read-string number) (extract number code)])))
+
+(defn parse-string [code]
+  (let [string (last (re-find #"^\"([^\"]*)\"" code))]
+    (if (nil? string) 
+      nil
+      [string (apply str (drop (+ 2 (count string)) code))])))
+
+(defn parse-square-bracket [code]                                                                                                                                       
+  (let [char (first code)]                                                                                                                                              
+    (if (= \[ char)                                                                                                                                                     
+      [char (extract char code)]                                                                                                                                        
+      nil)))
+
+(defn parse-close-square-bracket [code]
+  (let [char (first code)]
+    (if (= \] char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-round-bracket [code]
+  (let [char (first code)]
+    (if (= \( char)
+      [char (extract char code)]
+      nil)))
+      
+(defn parse-close-round-bracket [code]
+  (let [char (first code)]
+    (if (= \) char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-backtick [code]
+  (let [char (first code)]
+    (if (= \` char)
+      [:macro-body (extract char code)]
+      nil)))
+
+(defn parse-tilde [code]
+  (let [char (first code)]
+    (if (= \~ char)
+      [:de-ref (extract char code)]
+      nil)))
+
+(defn parse-ampersand [code]
+  (let [char (first code)]
+    (if (= \& char)
+      [(symbol (str char)) (extract char code)])))
+```
 
