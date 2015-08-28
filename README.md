@@ -255,4 +255,9 @@ We can easily chain a series of mathematical functions such as these without won
 
 ![txt][math]
 
-[math]: https://encrypted-tbn1.gstatic.com/images?q=tbn:ANd9GcSzkS0qcrsBtSgZH_tlPadeRveBd_lm3UvMTD1Uxps7AppMt71Z
+[math]: https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRqCLnWDw9sfCf3RNptuSzaCnQdm6IhbsAeYj5Vh-2ddhuXPGBPEg
+
+In Clojure, the right side of this statement would be:
+
+```clojure
+(- (- 0 b) (
