@@ -249,7 +249,7 @@ Cue *Monads*.
 
 Combining or *composing* functions is something we are very familiar with when it comes to, say, math.
 
-We can easily chain a series of mathematical functions such as these without wondering if the whole, [rube-goldberg][] structure will work or not.
+We can easily chain a series of mathematical functions such as these without worrying if the whole, [rube-goldberg][] structure will work or not.
 
 [rube-goldberg]: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
 
@@ -264,5 +264,18 @@ In Clojure (with mythical 'sqrt' & 'sqr' functions), this would look like:
 ```
 
 No big deal.
+
+This is because all these functions have similar *signatures*:
+
+```haskell
+Math-function1 :: Number -> Number
+Math-function2 :: Number -> Number -> Number
+```
+
+We immediately see that any function that takes two numbers and returns a number can easily be composed with another function and number. This combination will return a number, which can again be composed with yet another function which only takes one number as a parameter.
+
+(Math-func2 (Math-func1 (Math-func1 n1 n2) n3))
+
+We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes two parameters, and Math-func2 takes one.
 
 
