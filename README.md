@@ -252,3 +252,5 @@ Combining or *composing* functions is something we are very familiar with when i
 We can easily chain a series of mathematical functions such as these without wondering if the whole, [rube-goldberg][] structure will work or not.
 
 [rube-goldberg]: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
+
+$ \frac{n!}{k!(n-k)!} 
