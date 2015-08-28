@@ -3,7 +3,7 @@ Learning Clojure by writing a Clojure parser. In Clojure.
 
 ### Introduction ###
 
-So you want to learn Clojure? Parse it. In Clojure. Oh and do it with Monads. At least that's how we do things in [GeekSkool][]. 
+So you want to learn Clojure? Parse it. In Clojure. Oh and do it with *Monads*. At least that's how we do things in [GeekSkool][]. 
 
 [GeekSkool]: http://geekskool.com
 
@@ -65,7 +65,7 @@ We'll start by breaking up the problem into small, solvable pieces. We are only 
 * Strings
 * Symbols (Literals which generally name other objects)
 * Keywords (Symbols prefaced by ':' used especially in maps)
-* Names (Symbols which are the names of functions defined in the program, and built-in functions)
+* Identifiers (Symbols which are the names of functions defined in the program, and built-in functions)
 * Booleans
 * Back-ticks, Tildes and Ampersands (so we can implement simple macros)
 * Parentheses
@@ -84,14 +84,14 @@ Function names can only be composed by the following in our subset of Clojure:
 
 * Operators
 * Keywords (when applied to maps, for example)
-* Names 
+* Identifiers
 
 Arguments can be composed by any of the following: 
 
 * Numbers
 * Strings
 * Symbols
-* Names (functions can be passed as arguments)
+* Identifiers (functions can be passed as arguments)
 * Keywords
 * Booleans
 * Vectors 
@@ -191,5 +191,49 @@ Similarly,
   (let [char (first code)]
     (if (= \& char)
       [(symbol (str char)) (extract char code)])))
-```
+      
+(defn parse-identifier [code]
+  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
+    (if (nil? identifier)
+      nil
+      [identifier (extract identifier code)])))
 
+(defn parse-boolean [code]
+  (let [boolean (first (parse-identifier code))]
+    (cond
+      (nil? boolean) nil
+      (= "true" boolean) [true (extract boolean code)]
+      (= "false" boolean) [false (extract boolean code)]
+      :else nil)))
+      
+(defn parse-name [code]
+  (let [identifier (first (parse-identifier code))]
+    (cond 
+      (nil? identifier) nil
+      (= "true" identifier) nil
+      (= "false" identifier) nil
+      :else [(symbol (name identifier)) (extract identifier code)])))
+
+(defn parse-keyword [code]
+  (let [keyword (re-find #"^:[\w-.]+" code)]
+    (if (nil? keyword)
+      nil
+      [(read-string keyword) (extract keyword code)])))
+      
+(defn parse-operator [code]
+  (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
+    (cond
+      (= "+ " operator) [:plus (extract operator code)]
+      (= "- " operator) [:minus (extract operator code)]
+      (= "* " operator) [:multiply (extract operator code)]
+      (= "/ " operator) [:divide (extract operator code)]
+      (= "= " operator) [:equals (extract operator code)]
+      (= "> " operator) [:greater-than (extract operator code)]
+      (= "< " operator) [:less-than (extract operator code)]
+      :else nil)))
+```
+So a whole host of simple parsers like this can be given the responsibility of parsing little pieces of the code such as numbers, strings, symbols and identifiers.
+
+We are going to combine little parsers such as these to parse more complex structures - and this is where things get interesting.
+
+Cue *Monads*.
