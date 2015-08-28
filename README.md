@@ -253,4 +253,4 @@ We can easily chain a series of mathematical functions such as these without won
 
 [rube-goldberg]: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
 
-$ \frac{n!}{k!(n-k)!} 
+$ \frac{n!}{k!(n-k)!} $
