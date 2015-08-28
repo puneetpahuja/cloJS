@@ -3,7 +3,7 @@ Learning Clojure by writing a Clojure parser. In Clojure.
 
 ### Introduction ###
 
-So you want to learn Clojure? Parse it. In Clojure. At least that's how we do things in [GeekSkool][]. 
+So you want to learn Clojure? Parse it. In Clojure. Oh and do it with Monads. At least that's how we do things in [GeekSkool][]. 
 
 [GeekSkool]: http://geekskool.com
 
@@ -33,7 +33,7 @@ we see that:
 
 \* has two children: 3, and \+ with two children 5 and 2
 
-This implies \+ could be mapped to a vector containing 5 and 2 : 
+This implies \+ could be mapped to a vector containing 5 and 2 (vector because there is an implicit order to the children, and also the clojure convention is to put arguments in vectors): 
 
 ```clojure
 {+ [5 2]}
@@ -57,4 +57,24 @@ is
 {* [3 {+ [5 2]}]}
 ```
 
-OK. So we are going to write a Clojure program that takes such simple Clojure code as an input, and returns a map like the one above as the output. 
+OK. So we are going to write a Clojure program that takes such simple Clojure code as an input, and returns a map like the one above as the output, except with some more helpful annotations. 
+
+We'll start by breaking up the problem into small, solvable pieces. We are only going to parse a subset of Clojure, with the following language objects:
+
+* Numbers
+* Strings
+* Keywords
+* Symbols
+* Booleans
+* Back-ticks, Tildes and Ampersands (so we can implement simple macros)
+* Parentheses
+* Square brackets
+* Operators
+
+These objects and characters composed together, form S-expressions in the follwoing format:
+
+<opening-parens><function-name><space><space-delimited-arguments><closing-parens>
+
+```clojure
+(func-name arg1 arg2 arg3...)
+```
