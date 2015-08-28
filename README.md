@@ -63,18 +63,55 @@ We'll start by breaking up the problem into small, solvable pieces. We are only 
 
 * Numbers
 * Strings
-* Keywords
-* Symbols
+* Symbols (Literals which generally name other objects)
+* Keywords (Symbols prefaced by ':' used especially in maps)
+* Names (Symbols which are the names of functions defined in the program, and built-in functions)
 * Booleans
 * Back-ticks, Tildes and Ampersands (so we can implement simple macros)
 * Parentheses
 * Square brackets
 * Operators
+* Vectors ([arg1 arg2..] We will ignore other types of collections for now)
 
-These objects and characters composed together, form S-expressions in the follwoing format:
-
-<opening-parens><function-name><space><space-delimited-arguments><closing-parens>
+These objects and characters composed together, form S-expressions in the following format:
 
 ```clojure
 (func-name arg1 arg2 arg3...)
 ```
+(Optionally, macro body expressions can start with back-ticks before the opening parens - but we'll get to that later)
+
+Function names can only be composed by the following in our subset of Clojure:
+
+* Operators
+* Keywords (when applied to maps, for example)
+* Names 
+
+Arguments can be composed by any of the following: 
+
+* Numbers
+* Strings
+* Symbols
+* Names (functions can be passed as arguments)
+* Keywords
+* Booleans
+* Vectors 
+* Tildes (Prefaced to dereferencable symbols in the Macro-body - more later...)
+* S-expressions themselves (nested expression as in our exaple above)
+
+We will obviously have to parse the parentheses as well to understand where an expression begins, and where it ends.
+
+So let's start by just parsing these individual components and then move on to *composing* these parsers together to parse function names and arguments.
+
+What exactly does a parser look like?
+
+A parser is a function that takes a string as an input and returns two things:
+
+* A 'consumed' part
+* The rest of the string
+
+```haskell
+P :: S -> [a, String]
+```
+
+
+
