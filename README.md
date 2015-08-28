@@ -257,7 +257,12 @@ We can easily chain a series of mathematical functions such as these without won
 
 [math]: https://encrypted-tbn3.gstatic.com/images?q=tbn:ANd9GcRqCLnWDw9sfCf3RNptuSzaCnQdm6IhbsAeYj5Vh-2ddhuXPGBPEg
 
-In Clojure, the right side of this statement would be:
+In Clojure (with mythical 'sqrt' & 'sqr' functions), this would look like:
 
 ```clojure
-(- (- 0 b) (
+(/ (+ (- (+ x 1) (sqrt (sqr (- x 1)))) (sqrt (- (+ x 1) (sqrt (sqr (- x 1)))))) 4)
+```
+
+No big deal.
+
+
