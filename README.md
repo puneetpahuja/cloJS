@@ -278,7 +278,7 @@ We immediately see that any function that takes two numbers and returns a number
 
 We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes one parameter, and Math-func2 takes two. The + function takes two numbers, but the 'sqr' function takes only one.
 
-But what about functions that have different signatures? 
+But what about functions that have dissimilar signatures? 
 
 ```haskell
 Func1 :: String -> String
