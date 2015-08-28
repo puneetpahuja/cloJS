@@ -286,6 +286,6 @@ Func2 :: String -> Number
 Func3 :: String -> Boolean
 ```
 
-Can we *compose* such functions with the same ease with which we do math functions?
+Can we *compose* such functions with the same ease with which we do compose math functions?
 
 
