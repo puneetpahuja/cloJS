@@ -111,9 +111,7 @@ A parser is a function that takes a string as an input and returns two things:
 
 or 
 
-```clojure
-nil
-```
+* nil
 
 if it doesn't find what it's looking for. 
 
