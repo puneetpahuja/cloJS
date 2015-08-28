@@ -276,6 +276,16 @@ We immediately see that any function that takes two numbers and returns a number
 
 (Math-func2 (Math-func1 (Math-func1 n1 n2) n3))
 
-We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes two parameters, and Math-func2 takes one.
+We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes two parameters, and Math-func2 takes one. The + function takes two numbers, but the 'sqr' function takes only one.
+
+But what about functions that have different signatures? 
+
+```haskell
+Func1 :: String -> String
+Func2 :: String -> Number
+Func3 :: String -> Boolean
+```
+
+Can we *compose* such functions with the same ease with which we do math functions?
 
 
