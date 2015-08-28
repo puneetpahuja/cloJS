@@ -237,3 +237,9 @@ So a whole host of simple parsers like this can be given the responsibility of p
 We are going to combine little parsers such as these to parse more complex structures - and this is where things get interesting.
 
 Cue *Monads*.
+
+Combining or *composing* functions is something we are very familiar with when it comes to, say, math.
+
+We can easily chain a series of mathematical functions such as these without wondering if the whole, [rube-goldberg][] structure will work or not.
+
+[rube-goldberg]: https://en.wikipedia.org/wiki/Rube_Goldberg_machine
