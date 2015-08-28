@@ -112,6 +112,21 @@ A parser is a function that takes a string as an input and returns two things:
 ```haskell
 Parser :: String -> [Anything, String]
 ```
+So a space parser could take 
 
+" the rest of the string" 
 
+and return 
+
+[" ", "the rest of the string"]
+
+This is what it looks like in poorly written, non-idiomatic Clojure:
+
+```clojure
+(defn parse-space [code]
+  (let [space (re-find #"^\s+" code)]
+    (if (nil? space)
+      nil
+      [space (extract space code)])))
+```
 
