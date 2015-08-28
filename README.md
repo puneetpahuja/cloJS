@@ -91,11 +91,11 @@ Arguments can be composed by any of the following:
 * Numbers
 * Strings
 * Symbols
-* Identifiers (functions can be passed as arguments)
 * Keywords
 * Booleans
 * Vectors 
 * Tildes (Prefaced to dereferencable symbols in the Macro-body - more later...)
+* Function names (functions can be passed as arguments)
 * S-expressions themselves (nested expression as in our exaple above)
 
 We will obviously have to parse the parentheses as well to understand where an expression begins, and where it ends.
