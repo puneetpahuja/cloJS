@@ -109,8 +109,17 @@ A parser is a function that takes a string as an input and returns two things:
 * A 'consumed' part
 * The rest of the string
 
+or 
+
+```clojure
+nil
+```
+
+if it doesn't find what it's looking for. 
+
+
 ```haskell
-Parser :: String -> [Anything, String]
+Parser :: String -> [Anything, String] | nil
 ```
 So a space parser could take 
 
@@ -119,6 +128,8 @@ So a space parser could take
 and return 
 
 [" ", "the rest of the string"]
+
+"string without starting space" would just return `nil`.
 
 This is what it looks like in poorly written, non-idiomatic Clojure:
 
@@ -134,9 +145,9 @@ This is what it looks like in poorly written, non-idiomatic Clojure:
 Similarly,
 
 ```clojure
-(defn parse-newline [code]                                                                                                                                              
-    (if (= \newline (first code))                                                                                                                                       
-      [\newline (apply str (rest code))]                                                                                                                                
+(defn parse-newline [code]                                                                 
+    (if (= \newline (first code))                                                                           
+      [\newline (apply str (rest code))]
       nil))
 
 (defn parse-number [code]
