@@ -66,7 +66,7 @@ We'll start by breaking up the problem into small, solvable pieces. We are only 
 * Symbols (Literals which generally name other objects)
 * Keywords (Symbols prefaced by ':' used especially in maps)
 * Identifiers (Symbols which are the names of functions defined in the program, and built-in functions)
-* Booleans
+* Booleans (The symbols true and false)
 * Back-ticks, Tildes and Ampersands (so we can implement simple macros)
 * Parentheses
 * Square brackets
