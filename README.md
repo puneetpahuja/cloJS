@@ -274,9 +274,9 @@ Math-function2 :: Number -> Number -> Number
 
 We immediately see that any function that takes two numbers and returns a number can easily be composed with another function and number. This combination will return a number, which can again be composed with yet another function which only takes one number as a parameter.
 
-(Math-func2 (Math-func1 (Math-func1 n1 n2) n3))
+(Math-func1 (Math-func2 (Math-func2 n1 n2) n3))
 
-We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes two parameters, and Math-func2 takes one. The + function takes two numbers, but the 'sqr' function takes only one.
+We just have to be careful that the right *number* of parameters are passed to the corresponding function. This is easy enough to do with straight-forward syntax. Math-func1 always takes one parameter, and Math-func2 takes two. The + function takes two numbers, but the 'sqr' function takes only one.
 
 But what about functions that have different signatures? 
 
