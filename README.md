@@ -39,7 +39,7 @@ This implies \+ could be mapped to a vector containing 5 and 2 (vector because t
 {+ [5 2]}
 ```
 
-\* can then be mapped to 3 and the afore-mentioned map: 
+\* can then be mapped to a vector containing 3 and the afore-mentioned map: 
 
 ```clojure
 {* [3 {+ [5 2]}]}
