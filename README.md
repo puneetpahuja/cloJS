@@ -100,7 +100,7 @@ Arguments can be composed by any of the following:
 
 We will obviously have to parse the parentheses as well to understand where an expression begins, and where it ends.
 
-So let's start by just parsing these individual components and then move on to *composing* these parsers together to parse function names and arguments - using the Parer Monad.
+So let's start by just parsing these individual components and then move on to *composing* these parsers together to parse function names and arguments - using the Parser Monad.
 
 What exactly does a parser look like?
 
