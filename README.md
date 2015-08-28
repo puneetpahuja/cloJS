@@ -110,7 +110,7 @@ A parser is a function that takes a string as an input and returns two things:
 * The rest of the string
 
 ```haskell
-P :: S -> [a, String]
+P :: String -> [anything, String]
 ```
 
 
