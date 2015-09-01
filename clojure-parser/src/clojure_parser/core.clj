@@ -12,25 +12,10 @@
     (apply str (drop (count element) code))))
 
 ;;; Element parsers
-(defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
-    (if (nil? identifier)
-      nil
-      [identifier (extract identifier code)])))
-
-(defn parse-name [code]
-  (let [identifier (first (parse-identifier code))]
-    (cond 
-      (nil? identifier) nil
-      (= "true" identifier) nil
-      (= "false" identifier) nil
-      :else [(symbol (name identifier)) (extract identifier code)])))
-
-(defn parse-keyword [code]
-  (let [keyword (re-find #"^:[\w-.]+" code)]
-    (if (nil? keyword)
-      nil
-      [(read-string keyword) (extract keyword code)])))
+(defn parse-newline [code]
+    (if (= \newline (first code)) 
+      [\newline (apply str (rest code))]
+      nil))
 
 (defn parse-space [code]
   (let [space (re-find #"^\s+" code)]
@@ -38,24 +23,11 @@
       nil
       [space (extract space code)])))
 
-(defn parse-newline [code]
-    (if (= \newline (first code)) 
-      [\newline (apply str (rest code))]
-      nil))
-
 (defn parse-number [code]
   (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
     (if (nil? number)
       nil
       [(read-string number) (extract number code)])))
-
-(defn parse-boolean [code]
-  (let [boolean (first (parse-identifier code))]
-    (cond
-      (nil? boolean) nil
-      (= "true" boolean) [true (extract boolean code)]
-      (= "false" boolean) [false (extract boolean code)]
-      :else nil)))
 
 (defn parse-string [code]
   (let [string (last (re-find #"^\"([^\"]*)\"" code))]
@@ -87,7 +59,7 @@
       [char (extract char code)]
       nil)))
 
-(defn parse-quote [code]
+(defn parse-backtick [code]
   (let [char (first code)]
     (if (= \` char)
       [:macro-body (extract char code)]
@@ -104,12 +76,40 @@
     (if (= \& char)
       [(symbol (str char)) (extract char code)])))
 
+(defn parse-identifier [code]
+  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
+    (if (nil? identifier)
+      nil
+      [identifier (extract identifier code)])))
+
+(defn parse-boolean [code]
+  (let [boolean (first (parse-identifier code))]
+    (cond
+      (nil? boolean) nil
+      (= "true" boolean) [true (extract boolean code)]
+      (= "false" boolean) [false (extract boolean code)]
+      :else nil)))
+
+(defn parse-name [code]
+  (let [identifier (first (parse-identifier code))]
+    (cond 
+      (nil? identifier) nil
+      (= "true" identifier) nil
+      (= "false" identifier) nil
+      :else [(symbol (name identifier)) (extract identifier code)])))
+
 (defn parse-deref [code]
   (let [for-deref (parse-tilde code)]
     (if (nil? for-deref)
       nil
       (let [deref (parse-name (last for-deref))]
         [(symbol (str ":de-ref " (first deref))) (last deref)]))))
+
+(defn parse-keyword [code]
+  (let [keyword (re-find #"^:[\w-.]+" code)]
+    (if (nil? keyword)
+      nil
+      [(read-string keyword) (extract keyword code)])))
 
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
@@ -251,7 +251,7 @@
       name (match-one m-form)
       _ (optional (match-one parse-space))
       args (nested-one-or-more  (match-one (skip-one-or-more parse-newline)
-                                           parse-quote
+                                           parse-backtick
                                            parse-deref
                                            m-argument
                                            m-parse-expression

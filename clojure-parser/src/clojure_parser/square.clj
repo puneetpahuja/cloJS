@@ -13,6 +13,3 @@
 (defmonad identity
   (fn [mv mf] (mf mv))
   (fn [x] x))
-
-
-
