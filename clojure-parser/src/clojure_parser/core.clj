@@ -62,7 +62,7 @@
 (defn parse-backtick [code]
   (let [char (first code)]
     (if (= \` char)
-      [:macro-body (extract char code)]
+      [:escape-macro-body (extract char code)]
       nil)))
 
 (defn parse-tilde [code]
@@ -147,9 +147,8 @@
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
 
-;; Parser combinators
+;;; Parser combinators
 (with-monad parser-m
-
   (defn optional
     "Take a parser and return an optional version of it."
     [parser]
@@ -262,7 +261,7 @@
      (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
 ;;; Formatting methods
-(defn mapify 
+(defn mapify
   "Takes an s-expression and returns a map of form-name to a vector of form-arguments"
   [lst]
   (assoc {} (first lst)
@@ -278,12 +277,12 @@
                arguments)))))
 
 ;;; Macro expansion
-(defn bind-args 
+(defn bind-args
   "Helper function to bind"
   [macro-args args]
   (apply assoc {} (interleave macro-args args)))
 
-(defn and-expand 
+(defn and-expand
   "Expands and splices in variable number of expressions in the macro-args"
   [macro-args]
   (if (= (symbol "&") (last (butlast macro-args)))
@@ -291,7 +290,7 @@
       (conj (vec (butlast (butlast macro-args))) and-term))
     macro-args))
 
-(defn bind 
+(defn bind
   "Returns a map of the args in to the bindings in the macro definition"
   [macro-args args]
   (loop [macro-args macro-args
@@ -307,7 +306,7 @@
              (rest args)
              (conj accumalator (first macro-args) (first args))))))
 
-(defn load-macros 
+(defn load-macros
   "Adds macros from a string of code to the macro tree"
   [code]
   (loop [expression (first (m-parse-expression code))
@@ -323,7 +322,7 @@
                (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
-(defn find-macro 
+(defn find-macro
   "Checks if the given name is a macro, returns the macro tree"
   [macros name]
   (loop [macros macros
@@ -335,7 +334,7 @@
           macro
           (recur (rest macros) name))))))
 
-(defn de-ref 
+(defn de-ref
   "Helper function for de-reference"
   [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
@@ -355,16 +354,26 @@
                                  (re-pattern (str ":de-ref " (name (first keys))))
                                  (str ((first keys) refs)))))))))
 
-(defn de-reference 
+(defn evaluate
+  "Evaluates mapified expression"
+  [exp]
+  (do
+    (clojure.pprint/pprint (apply str "Expand this: " exp))
+    (eval exp)))
+
+(defn de-reference
   "Returns the macro body with the place-holders replaced by the final values"
   [macro parts]
   (let [macro-args (map keyword (map str (and-expand (:vector (second (:defmacro macro))))))
+        escape (last (butlast (:defmacro macro)))
         macro-body (last (:defmacro macro))
         reference-map (bind macro-args parts)
         expanded-form (de-ref reference-map macro-body)]
-      (read-string expanded-form)))
+      (if (= :escape-macro-body escape)
+        (read-string expanded-form)
+        (read-string (evaluate expanded-form)))))
 
-(defn expand-macro 
+(defn expand-macro
   "If the supplied expression is a macro, returns the expanded form"
   [exp macros]
   (let [parts (first (vals exp))
