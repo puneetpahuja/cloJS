@@ -367,7 +367,7 @@
            evaluated-args []]
       (let [arg (first args)]
         (if (empty? args)
-          (apply list func evaluated-args)
+          (apply list (symbol (name func)) evaluated-args)
           (if (map? arg)
             (recur (rest args) (conj evaluated-args (evalate arg)))
             (recur (rest args) (conj evaluated-args arg))))))))
