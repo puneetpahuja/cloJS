@@ -12,25 +12,10 @@
     (apply str (drop (count element) code))))
 
 ;;; Element parsers
-(defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
-    (if (nil? identifier)
-      nil
-      [identifier (extract identifier code)])))
-
-(defn parse-name [code]
-  (let [identifier (first (parse-identifier code))]
-    (cond 
-      (nil? identifier) nil
-      (= "true" identifier) nil
-      (= "false" identifier) nil
-      :else [(symbol (name identifier)) (extract identifier code)])))
-
-(defn parse-keyword [code]
-  (let [keyword (re-find #"^:[\w-.]+" code)]
-    (if (nil? keyword)
-      nil
-      [(read-string keyword) (extract keyword code)])))
+(defn parse-newline [code]
+    (if (= \newline (first code)) 
+      [\newline (apply str (rest code))]
+      nil))
 
 (defn parse-space [code]
   (let [space (re-find #"^\s+" code)]
@@ -38,24 +23,11 @@
       nil
       [space (extract space code)])))
 
-(defn parse-newline [code]
-    (if (= \newline (first code)) 
-      [\newline (apply str (rest code))]
-      nil))
-
 (defn parse-number [code]
   (let [number (re-find #"^[+-]?\d+[.]?[\d+]?" code)]
     (if (nil? number)
       nil
       [(read-string number) (extract number code)])))
-
-(defn parse-boolean [code]
-  (let [boolean (first (parse-identifier code))]
-    (cond
-      (nil? boolean) nil
-      (= "true" boolean) [true (extract boolean code)]
-      (= "false" boolean) [false (extract boolean code)]
-      :else nil)))
 
 (defn parse-string [code]
   (let [string (last (re-find #"^\"([^\"]*)\"" code))]
@@ -87,10 +59,10 @@
       [char (extract char code)]
       nil)))
 
-(defn parse-quote [code]
+(defn parse-backtick [code]
   (let [char (first code)]
     (if (= \` char)
-      [:macro-body (extract char code)]
+      [:escape-macro-body (extract char code)]
       nil)))
 
 (defn parse-tilde [code]
@@ -104,12 +76,40 @@
     (if (= \& char)
       [(symbol (str char)) (extract char code)])))
 
+(defn parse-identifier [code]
+  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
+    (if (nil? identifier)
+      nil
+      [identifier (extract identifier code)])))
+
+(defn parse-boolean [code]
+  (let [boolean (first (parse-identifier code))]
+    (cond
+      (nil? boolean) nil
+      (= "true" boolean) [true (extract boolean code)]
+      (= "false" boolean) [false (extract boolean code)]
+      :else nil)))
+
+(defn parse-name [code]
+  (let [identifier (first (parse-identifier code))]
+    (cond 
+      (nil? identifier) nil
+      (= "true" identifier) nil
+      (= "false" identifier) nil
+      :else [(symbol (name identifier)) (extract identifier code)])))
+
 (defn parse-deref [code]
   (let [for-deref (parse-tilde code)]
     (if (nil? for-deref)
       nil
       (let [deref (parse-name (last for-deref))]
         [(symbol (str ":de-ref " (first deref))) (last deref)]))))
+
+(defn parse-keyword [code]
+  (let [keyword (re-find #"^:[\w-.]+" code)]
+    (if (nil? keyword)
+      nil
+      [(read-string keyword) (extract keyword code)])))
 
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
@@ -147,9 +147,8 @@
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
 
-;; Parser combinators
+;;; Parser combinators
 (with-monad parser-m
-
   (defn optional
     "Take a parser and return an optional version of it."
     [parser]
@@ -251,7 +250,7 @@
       name (match-one m-form)
       _ (optional (match-one parse-space))
       args (nested-one-or-more  (match-one (skip-one-or-more parse-newline)
-                                           parse-quote
+                                           parse-backtick
                                            parse-deref
                                            m-argument
                                            m-parse-expression
@@ -262,7 +261,7 @@
      (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
 ;;; Formatting methods
-(defn mapify 
+(defn mapify
   "Takes an s-expression and returns a map of form-name to a vector of form-arguments"
   [lst]
   (assoc {} (first lst)
@@ -278,12 +277,12 @@
                arguments)))))
 
 ;;; Macro expansion
-(defn bind-args 
+(defn bind-args
   "Helper function to bind"
   [macro-args args]
   (apply assoc {} (interleave macro-args args)))
 
-(defn and-expand 
+(defn and-expand
   "Expands and splices in variable number of expressions in the macro-args"
   [macro-args]
   (if (= (symbol "&") (last (butlast macro-args)))
@@ -291,7 +290,7 @@
       (conj (vec (butlast (butlast macro-args))) and-term))
     macro-args))
 
-(defn bind 
+(defn bind
   "Returns a map of the args in to the bindings in the macro definition"
   [macro-args args]
   (loop [macro-args macro-args
@@ -307,7 +306,7 @@
              (rest args)
              (conj accumalator (first macro-args) (first args))))))
 
-(defn load-macros 
+(defn load-macros
   "Adds macros from a string of code to the macro tree"
   [code]
   (loop [expression (first (m-parse-expression code))
@@ -323,7 +322,7 @@
                (apply str (rest (m-parse-expression remainder)))
                (conj tree (mapify (rest expression))))))))
 
-(defn find-macro 
+(defn find-macro
   "Checks if the given name is a macro, returns the macro tree"
   [macros name]
   (loop [macros macros
@@ -335,7 +334,7 @@
           macro
           (recur (rest macros) name))))))
 
-(defn de-ref 
+(defn de-ref
   "Helper function for de-reference"
   [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
@@ -355,16 +354,26 @@
                                  (re-pattern (str ":de-ref " (name (first keys))))
                                  (str ((first keys) refs)))))))))
 
-(defn de-reference 
+(defn evaluate
+  "Evaluates mapified expression"
+  [exp]
+  (do
+    (clojure.pprint/pprint (apply str "Expand this: " exp))
+    (eval exp)))
+
+(defn de-reference
   "Returns the macro body with the place-holders replaced by the final values"
   [macro parts]
   (let [macro-args (map keyword (map str (and-expand (:vector (second (:defmacro macro))))))
+        escape (last (butlast (:defmacro macro)))
         macro-body (last (:defmacro macro))
         reference-map (bind macro-args parts)
         expanded-form (de-ref reference-map macro-body)]
-      (read-string expanded-form)))
+      (if (= :escape-macro-body escape)
+        (read-string expanded-form)
+        (read-string (evaluate expanded-form)))))
 
-(defn expand-macro 
+(defn expand-macro
   "If the supplied expression is a macro, returns the expanded form"
   [exp macros]
   (let [parts (first (vals exp))
