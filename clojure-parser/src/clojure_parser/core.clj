@@ -215,7 +215,7 @@
                       parse-reserved
                       parse-name
                       parse-operator)]
-     name)))
+     name))
 
   (declare m-argument)
 
