@@ -215,7 +215,7 @@
                       parse-reserved
                       parse-name
                       parse-operator)]
-     name))
+     (keyword name)))
 
   (declare m-argument)
 
@@ -365,11 +365,12 @@
   (let [func (first (keys exp))]
     (loop [args (func exp)
            evaluated-args []]
-      (if (empty? args)
-        (apply list func evaluated-args)
-        (if (map? arg)
-          (recur (rest args) (conj evaluated-args (evalate arg)))
-          (recur (rest args) (conj evaluated-args arg)))))))
+      (let [arg (first args)]
+        (if (empty? args)
+          (apply list func evaluated-args)
+          (if (map? arg)
+            (recur (rest args) (conj evaluated-args (evalate arg)))
+            (recur (rest args) (conj evaluated-args arg))))))))
 
 (defn de-reference
   "Returns the macro body with the place-holders replaced by the final values"
