@@ -135,13 +135,13 @@
 (defn parse-operator [code]
   (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
     (cond
-      (= "+ " operator) [:plus (extract operator code)]
-      (= "- " operator) [:minus (extract operator code)]
-      (= "* " operator) [:multiply (extract operator code)]
-      (= "/ " operator) [:divide (extract operator code)]
-      (= "= " operator) [:equals (extract operator code)]
-      (= "> " operator) [:greater-than (extract operator code)]
-      (= "< " operator) [:less-than (extract operator code)]
+      (= "+ " operator) [:+ (extract operator code)]
+      (= "- " operator) [:- (extract operator code)]
+      (= "* " operator) [:* (extract operator code)]
+      (= "/ " operator) [:/ (extract operator code)]
+      (= "= " operator) [:= (extract operator code)]
+      (= "> " operator) [:> (extract operator code)]
+      (= "< " operator) [:< (extract operator code)]
       :else nil)))
 
 ;;; Parser monad
@@ -360,6 +360,16 @@
   (do
     (clojure.pprint/pprint (apply str "Expand this: " exp))
     (eval exp)))
+
+(defn evalate [exp]
+  (let [func (first (keys exp))]
+    (loop [args (func exp)
+           evaluated-args []]
+      (if (empty? args)
+        (apply list func evaluated-args)
+        (if (map? arg)
+          (recur (rest args) (conj evaluated-args (evalate arg)))
+          (recur (rest args) (conj evaluated-args arg)))))))
 
 (defn de-reference
   "Returns the macro body with the place-holders replaced by the final values"
