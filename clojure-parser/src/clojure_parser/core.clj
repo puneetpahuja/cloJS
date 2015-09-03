@@ -354,14 +354,14 @@
                                  (re-pattern (str ":de-ref " (name (first keys))))
                                  (str ((first keys) refs)))))))))
 
-(defn evaluate
+(defn evalate
   "Evaluates mapified expression"
   [exp]
   (do
     (clojure.pprint/pprint (apply str "Expand this: " exp))
     (eval exp)))
 
-(defn evalate [exp]
+(defn evaluate [exp]
   (let [func (first (keys exp))]
     (loop [args (func exp)
            evaluated-args []]
@@ -369,8 +369,10 @@
         (if (empty? args)
           (apply (resolve (symbol (name func))) evaluated-args)
           (if (map? arg)
-            (recur (rest args) (conj evaluated-args (evalate arg)))
+            (recur (rest args) (conj evaluated-args (evaluate arg)))
             (recur (rest args) (conj evaluated-args arg))))))))
+
+(declare ast)
 
 (defn de-reference
   "Returns the macro body with the place-holders replaced by the final values"
@@ -382,7 +384,7 @@
         expanded-form (de-ref reference-map macro-body)]
       (if (= :escape-macro-body escape)
         (read-string expanded-form)
-        (read-string (evaluate expanded-form)))))
+        (first (ast (str (evaluate (read-string expanded-form))))))))
 
 (defn expand-macro
   "If the supplied expression is a macro, returns the expanded form"
