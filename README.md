@@ -166,10 +166,10 @@ Similarly,
       nil
       [string (apply str (drop (+ 2 (count string)) code))])))
 
-(defn parse-square-bracket [code]                                                                                                                                       
-  (let [char (first code)]                                                                                                                                              
-    (if (= \[ char)                                                                                                                                                     
-      [char (extract char code)]                                                                                                                                        
+(defn parse-square-bracket [code]                                                                 
+  (let [char (first code)]                                                                                    
+    (if (= \[ char)                                                           
+      [char (extract char code)]                                              
       nil)))
 
 (defn parse-close-square-bracket [code]
@@ -189,64 +189,8 @@ Similarly,
     (if (= \) char)
       [char (extract char code)]
       nil)))
-
-(defn parse-backtick [code]
-  (let [char (first code)]
-    (if (= \` char)
-      [:macro-body (extract char code)]
-      nil)))
-
-(defn parse-tilde [code]
-  (let [char (first code)]
-    (if (= \~ char)
-      [:de-ref (extract char code)]
-      nil)))
-
-(defn parse-ampersand [code]
-  (let [char (first code)]
-    (if (= \& char)
-      [(symbol (str char)) (extract char code)])))
-      
-(defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
-    (if (nil? identifier)
-      nil
-      [identifier (extract identifier code)])))
-
-(defn parse-boolean [code]
-  (let [boolean (first (parse-identifier code))]
-    (cond
-      (nil? boolean) nil
-      (= "true" boolean) [true (extract boolean code)]
-      (= "false" boolean) [false (extract boolean code)]
-      :else nil)))
-      
-(defn parse-name [code]
-  (let [identifier (first (parse-identifier code))]
-    (cond 
-      (nil? identifier) nil
-      (= "true" identifier) nil
-      (= "false" identifier) nil
-      :else [(symbol (name identifier)) (extract identifier code)])))
-
-(defn parse-keyword [code]
-  (let [keyword (re-find #"^:[\w-.]+" code)]
-    (if (nil? keyword)
-      nil
-      [(read-string keyword) (extract keyword code)])))
-      
-(defn parse-operator [code]
-  (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
-    (cond
-      (= "+ " operator) [:plus (extract operator code)]
-      (= "- " operator) [:minus (extract operator code)]
-      (= "* " operator) [:multiply (extract operator code)]
-      (= "/ " operator) [:divide (extract operator code)]
-      (= "= " operator) [:equals (extract operator code)]
-      (= "> " operator) [:greater-than (extract operator code)]
-      (= "< " operator) [:less-than (extract operator code)]
-      :else nil)))
 ```
+
 So a whole host of simple parsers like this can be given the responsibility of parsing little pieces of the code such as numbers, strings, symbols and identifiers.
 
 We are going to combine little parsers such as these to parse more complex structures - and this is where things get interesting.
