@@ -26,7 +26,7 @@ Any piece of code can be represented as a tree of objects and operators and func
 
 [ast]: http://www.codeproject.com/KB/recipes/sota_expression_evaluator/simplified_ast.png
 
-Now we can hardly expect the parser to spit out an image like this - what we want is a data structure that represents this tree. In Clojure, that would be a map - of parents and children. Vectors in Clojure look like this:
+Now we can hardly expect the parser to spit out an image like this - what we want is a data structure that represents this tree. In Clojure, that would be a map - of parents and children. Maps in Clojure look like this:
 
 ```clojure
 {key value}
