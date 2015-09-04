@@ -217,8 +217,8 @@ No big deal.
 This is because all these functions have similar *signatures*:
 
 ```haskell
-Math-function1 :: Number -> Number
-Math-function2 :: Number -> Number -> Number
+Math-function1 :: Number -> Number            --takes a Number as input, returns a number as output
+Math-function2 :: Number -> Number -> Number  --takes two numbers as input, returns a number as output
 ```
 
 We immediately see that any function that takes two numbers and returns a number can easily be composed with another function and number. This combination will return a number, which can again be composed with yet another function which only takes one number as a parameter.
@@ -230,9 +230,9 @@ We just have to be careful that the right *number* of parameters are passed to t
 But what about functions that have dissimilar signatures? 
 
 ```haskell
-Func1 :: String -> String
-Func2 :: String -> Number
-Func3 :: String -> Boolean
+Func1 :: String -> String       --takes a String, returns a String
+Func2 :: String -> Number       --takes a String, returns a Number
+Func3 :: String -> Boolean      --takes a String, returns a Boolean
 ```
 
 Can we *compose* such functions with the same ease with which we compose math functions?
@@ -253,19 +253,19 @@ Func3(Func2(Func1(parameter1)))
 
 It's clear this won't work because Func3 expects a String, but Func2 returns a Number(of some kind).
 
-What if we modified our functions to do something a little odd - they return their values, only in some kind of *box*:
+What if we modified our functions to do something a little odd - they return their values, only in some kind of *box* (which could be an array, or list or anything, really):
 
 ```haskell
-Func1 :: String -> Box[String]
+Func1 :: String -> Box[String]      --The return type is Box, we are showing the contents for clarity
 Func2 :: String -> Box[Number]
 Func3 :: String -> Box[Boolean]
 ```
 Now all we need to do is modify the parameters they take to be boxes as well:
 
 ```haskell
-Func1 :: Box[String] -> Box[String]
-Func2 :: Box[String] -> Box[Number]
-Func3 :: Box[String] -> Box[Boolean]
+Func1 :: Box[String] -> Box[String]   --takes a Box, returns a Box
+Func2 :: Box[String] -> Box[Number]   --takes a Box, returns a Box
+Func3 :: Box[String] -> Box[Boolean]  --takes a Box, returns a Box
 ```
 
 This almost works - we can legally pass the result of one function to another since each expects a box and spits out a box. But then Func3 which expects to find a string in the box ends up getting a box with a number. Each of our functions need strings in their boxes to work. 
@@ -286,11 +286,11 @@ Well, because, unlike imperative programs, a purely functional program is just t
 
 In fact, apart from the simple, easy building-block functions that perform a well-defined and small part of the program's task well, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
 
-Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures accroding to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
+Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures according to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
 
 Well, that's exactly what Monads do.
 
-But first, let's (almost) restore your simple, straight-forward functions to their non-boxy form and see if we can make things work in another, more clever way. 
+But first, let's (almost) restore your simple, straight-forward functions to their (almost) non-boxy form and see if we can make things work in another, more clever way. 
 
 Let's step back from here:
 
@@ -303,30 +303,30 @@ Func3 :: Box[Anything, String] -> Box[Boolean, String]
 To here:
 
 ```haskell
-Func1 :: String -> Box[String, String]
-Func2 :: String -> Box[Number, String]
-Func3 :: String -> Box[Boolean, String]
+Func1 :: String -> Box[String, String]      --takes a String, returns a Box
+Func2 :: String -> Box[Number, String]      --takes a String, returns a Box
+Func3 :: String -> Box[Boolean, String]     --takes a String, returns a Box
 ```
 
 (Look familiar? This is like our parser, but not quite)
 
-Now let's just replace *box* with *M* (for Monadic Value), and String, Number, Boolean with a, b & c. 
+Now let's just replace *box* with *M* (for Monadic Value), and String, Number, Boolean with a, b & c to be more general. 
 
 ```haskell
-Func1 :: a -> Ma
-Func2 :: a -> Mb
-Func3 :: b -> Mc
+Func1 :: a -> Ma      --takes an a, returns a Monadic a (for now, think of this as 'Boxed' a)
+Func2 :: a -> Mb      --takes an a, returns a Monadic b
+Func3 :: b -> Mc      --takes a b, returns a Monadic c
 ```
 So the only change to our functions is that they take 'regular' values and return *Monadic* values.
 
 Now, instead of just passing the result of one function to the next, lets create something called a *Monadic Bind* to thread the functions together.
 
-Now this is a little involved, so lets pay attention:
+Now this is a little involved, so let's pay attention:
 
 ```haskell
 M-bind :: M-value -> (fn :: value -> M-value) -> M-value
 ```
-M-bind is a function that takes two parameters:
+So M-bind is a function that takes two parameters:
 
 * `M-value`, a Monadic value.
 * `(fn :: value -> M-value)`, A function which takes a value and returns a Monadic value
@@ -347,11 +347,18 @@ So to M-bind two of our function together, we `>>=` them like so:
 ```haskell
 Func1(a) >>= Func2
 ```
-This expands to:
+Func1 returns M a, so this expands to:
 
 ```haskell
-Func1 :: a -> Ma >>= Func2 :: a -> Mb
+M a >>= Func2 :: a -> M b
 ```
+
+`>>=` is an *infix* operator, so the two expressions on each side of the operator are taken as parameters:
+
+```haskell
+>>= M a -> Func2 -> M b
+```
+
 
 
 
