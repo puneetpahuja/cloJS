@@ -240,15 +240,41 @@ Can we *compose* such functions with the same ease with which we compose math fu
 
 We would like to do something like this (switching to parenthesised parameter syntax here):
 
+```c
 Func1(parameter1) -> result1
 Func2(result1) -> result2
 Func3(result2) -> result3
+```
 
 Or,
 
 ```c
 Func3(Func2(Func1(parameter1)))
 ```
+
+It's clear this won't work because Func3 expects a String, but Func2 returns a Number(of some kind).
+
+What if we modified our functions to do something a little odd - they return their values, only in some kind of *box*:
+
+```haskell
+Func1 :: Box[String] -> Box[String]
+Func2 :: Box[String] -> Box[Number]
+Func3 :: Box[String] -> Box[Boolean]
+```
+
+This almost works - we can legally pass the result of one function to another, but then Func3 which expects to find a string in the box ends up getting a box with a number. Each of our functions need strings in their boxes to work. 
+
+Ok, so what if:
+
+```haskell
+Func1 :: Box[Anything, String] -> Box[String, String]
+Func2 :: Box[Anything, String] -> Box[Number, String]
+Func3 :: Box[Anything, String] -> Box[Boolean, String]
+```
+
+Now our functions can be combined willy-nilly just like mathematical functions! 
+
+
 
 
 
