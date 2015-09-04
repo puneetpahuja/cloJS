@@ -317,7 +317,7 @@ Func1 :: a -> Ma
 Func2 :: a -> Mb
 Func3 :: b -> Mc
 ```
-So the only change to our functions is that they take 'regular' values and return *monadic* values.
+So the only change to our functions is that they take 'regular' values and return *Monadic* values.
 
 Now, instead of just passing the result of one function to the next, lets create something called a *Monadic Bind* to thread the functions together.
 
@@ -326,13 +326,34 @@ Now this is a little involved, so lets pay attention:
 ```haskell
 M-bind :: M-value -> (fn :: value -> M-value) -> M-value
 ```
-In Haskell, M-bind looks like this: `>>=`
+M-bind is a function that takes two parameters:
 
-So, using Func2 as an example, if:
+* `M-value`, a Monadic value.
+* `(fn :: value -> M-value)`, A function which takes a value and returns a Monadic value
+
+And it returns:
+
+* `M-value`, a Monadic value.
+
+Let's write this out using Func1 & Func2 and we'll see why this is brilliant.
+
+But first, in Haskell (the motherlode of Monads), M-bind looks like this: `>>=` - let's use this representation, just to seem a bit more intelligent.
 
 ```haskell
 >>= :: M a -> (fn :: a -> M b) -> M b
 ```
+So to M-bind two of our function together, we `>>=` them like so:
+
+```haskell
+Func1(a) >>= Func2
+```
+This expands to:
+
+```haskell
+Func1 :: a -> Ma >>= Func2 :: a -> Mb
+```
+
+
 
 
 
