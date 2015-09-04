@@ -310,15 +310,29 @@ Func3 :: String -> Box[Boolean, String]
 
 (Look familiar? This is like our parser, but not quite)
 
-Now let's just replace *box* with *M* (for Monadic Value), and String, Number, Boolean with a, b & c. We'll also change the signatures to be more generic.
+Now let's just replace *box* with *M* (for Monadic Value), and String, Number, Boolean with a, b & c. 
 
 ```haskell
 Func1 :: a -> Ma
 Func2 :: a -> Mb
 Func3 :: b -> Mc
 ```
-
 So the only change to our functions is that they take 'regular' values and return *monadic* values.
+
+Now, instead of just passing the result of one function to the next, lets create something called a *Monadic Bind* to thread the functions together.
+
+Now this is a little involved, so lets pay attention:
+
+```haskell
+M-bind :: M-value -> (fn :: value -> M-value) -> M-value
+```
+In Haskell, M-bind looks like this: `>>=`
+
+So, using Func2 as an example, if:
+
+```haskell
+>>= :: M a -> (fn :: a -> M b) -> M b
+```
 
 
 
