@@ -110,7 +110,7 @@ So let's start by just parsing these individual components and then move on to *
 
 What exactly does a parser look like?
 
-A parser is a function that takes a string as an input and returns two things:
+A parser is a function that takes, say, a string as an input and returns two things:
 
 * A 'consumed' part
 * The rest of the string
@@ -290,4 +290,6 @@ In fact, apart from the simple easy building-block functions that perform a well
 Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures accroding to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
 
 Well, that's exactly what Monads do.
+
+But first, let's (almost) restore your simple, straight-forward functions to their non-boxy form and see if we can make things work in another, more clever way. 
 
