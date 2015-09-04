@@ -238,4 +238,17 @@ Func3 :: String -> Boolean
 
 Can we *compose* such functions with the same ease with which we compose math functions?
 
+We would like to do something like this (switching to parenthesised parameter syntax here):
+
+Func1(parameter1) -> result1
+Func2(result1) -> result2
+Func3(result2) -> result3
+
+Or,
+
+```c
+Func3(Func2(Func1(parameter1)))
+```
+
+
 
