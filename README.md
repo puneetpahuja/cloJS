@@ -63,7 +63,7 @@ is
 {* [3 {+ [5 2]}]}
 ```
 
-OK. So we are going to write a Clojure program that takes such simple Clojure code as an input, and returns a map like the one above as the output, except with some more helpful annotations. 
+OK. So we are going to write a Clojure program that takes simple Clojure code as an input, and returns a map like the one above as the output, except with more helpful annotations. 
 
 We'll start by breaking up the problem into small, solvable pieces. We are only going to parse a subset of Clojure, with the following language objects:
 
