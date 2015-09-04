@@ -260,7 +260,7 @@ Func1 :: String -> Box[String]      --The return type is Box, we are showing the
 Func2 :: String -> Box[Number]
 Func3 :: String -> Box[Boolean]
 ```
-Now all we need to do is modify the parameters they take to be boxes as well:
+Now all we need to do is modify the parameters to be boxes as well:
 
 ```haskell
 Func1 :: Box[String] -> Box[String]   --takes a Box, returns a Box
@@ -280,11 +280,11 @@ Func3 :: Box[Anything, String] -> Box[Boolean, String]
 
 Now our functions can be combined willy-nilly just like mathematical functions! 
 
-But wait a minute - this is crazy! Why distort and boxify my nice, straight-forward functions just because of this threading business? That's nuts!!
+But wait a minute - this is crazy! Why distort and boxify my nice, straight-forward functions just because of this threading business? Why??
 
 Well, because, unlike imperative programs, a purely functional program is just that - a series of functions that are threaded into each other - one passing results to the next until the output of the program just pops out. And we all know that purely functional programs are the bees knees. That's why.
 
-In fact, apart from the simple, easy building-block functions that perform a well-defined and small part of the program's task well, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
+In fact, apart from the simple, easy building-block functions that perform a well-defined and small part of the program's task, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
 
 Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures according to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
 
@@ -295,9 +295,9 @@ But first, let's (almost) restore your simple, straight-forward functions to the
 Let's step back from here:
 
 ```haskell
-Func1 :: Box[Anything, String] -> Box[String, String]
-Func2 :: Box[Anything, String] -> Box[Number, String]
-Func3 :: Box[Anything, String] -> Box[Boolean, String]
+Func1 :: Box[Anything, String] -> Box[String, String]   --takes a Box, returns a Box
+Func2 :: Box[Anything, String] -> Box[Number, String]   --takes a Box, returns a Box
+Func3 :: Box[Anything, String] -> Box[Boolean, String]  --takes a Box, returns a Box
 ```
 
 To here:
@@ -324,7 +324,7 @@ Now, instead of just passing the result of one function to the next, lets create
 Now this is a little involved, so let's pay attention:
 
 ```haskell
-M-bind :: M-value -> (fn :: value -> M-value) -> M-value
+M-bind :: M-value -> (fn :: value -> M-value) -> M-value  --take a Monadic value & a Monadic function, return a                                                           --Monadic value
 ```
 So M-bind is a function that takes two parameters:
 
@@ -350,13 +350,19 @@ Func1(a) >>= Func2
 Func1 returns M a, so this expands to:
 
 ```haskell
+Func1 :: a -> M a >>= Func2
+
+Func1 :: a -> M a >>= Func2 :: a -> M b
+
 M a >>= Func2 :: a -> M b
 ```
 
 `>>=` is an *infix* operator, so the two expressions on each side of the operator are taken as parameters:
 
 ```haskell
->>= M a -> Func2 -> M b
+>>= :: M a -> Func2 -> M b
+
+>>= M a -> Func2 :: a -> Mb
 ```
 
 
