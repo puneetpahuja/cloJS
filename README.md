@@ -102,7 +102,7 @@ Arguments can be composed by any of the following:
 * Vectors 
 * Tildes (Prefaced to dereferencable symbols in the Macro-body - more later...)
 * Function names (functions can be passed as arguments)
-* S-expressions themselves (nested expression as in our exaple above)
+* S-expressions themselves (nested expression as in our example above)
 
 We will obviously have to parse the parentheses as well to understand where an expression begins, and where it ends.
 
@@ -121,10 +121,10 @@ or
 
 if it doesn't find what it's looking for. 
 
-
 ```haskell
 Parser :: String -> [Anything, String] | nil
 ```
+
 So a space parser could take 
 
 " the rest of the string" 
@@ -190,10 +190,9 @@ Similarly,
       [char (extract char code)]
       nil)))
 ```
-
 So a whole host of simple parsers like this can be given the responsibility of parsing little pieces of the code such as numbers, strings, symbols and identifiers.
 
-We are going to combine little parsers such as these to parse more complex structures - and this is where things get interesting.
+We are going to combine little parsers like these to parse more complex structures - and this is where things get interesting.
 
 Cue *Monads*.
 
@@ -240,7 +239,7 @@ Can we *compose* such functions with the same ease with which we compose math fu
 
 We would like to do something like this (switching to parenthesised parameter syntax here):
 
-```c
+```C
 Func1(parameter1) -> result1
 Func2(result1) -> result2
 Func3(result2) -> result3
@@ -248,7 +247,7 @@ Func3(result2) -> result3
 
 Or,
 
-```c
+```C
 Func3(Func2(Func1(parameter1)))
 ```
 
@@ -269,7 +268,7 @@ Func2 :: Box[String] -> Box[Number]
 Func3 :: Box[String] -> Box[Boolean]
 ```
 
-This almost works - we can legally pass the result of one function to another, but then Func3 which expects to find a string in the box ends up getting a box with a number. Each of our functions need strings in their boxes to work. 
+This almost works - we can legally pass the result of one function to another since each expects a box and spits out a box. But then Func3 which expects to find a string in the box ends up getting a box with a number. Each of our functions need strings in their boxes to work. 
 
 Ok, so what if:
 
@@ -283,13 +282,43 @@ Now our functions can be combined willy-nilly just like mathematical functions!
 
 But wait a minute - this is crazy! Why distort and boxify my nice, straight-forward functions just because of this threading business? That's nuts!!
 
-Well, because, unlike imperative programs, a purely functional program is just that - a series of functions that are threaded into eah other - one passing results to the next until the output of the program just pops out. And we all know that purely functional programs are the bees knees. That's why.
+Well, because, unlike imperative programs, a purely functional program is just that - a series of functions that are threaded into each other - one passing results to the next until the output of the program just pops out. And we all know that purely functional programs are the bees knees. That's why.
 
-In fact, apart from the simple easy building-block functions that perform a well-defined and small part of the program's task well, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
+In fact, apart from the simple, easy building-block functions that perform a well-defined and small part of the program's task well, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
 
 Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures accroding to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
 
 Well, that's exactly what Monads do.
 
 But first, let's (almost) restore your simple, straight-forward functions to their non-boxy form and see if we can make things work in another, more clever way. 
+
+Let's step back from here:
+
+```haskell
+Func1 :: Box[Anything, String] -> Box[String, String]
+Func2 :: Box[Anything, String] -> Box[Number, String]
+Func3 :: Box[Anything, String] -> Box[Boolean, String]
+```
+
+To here:
+
+```haskell
+Func1 :: String -> Box[String, String]
+Func2 :: String -> Box[Number, String]
+Func3 :: String -> Box[Boolean, String]
+```
+
+(Look familiar? This is like our parser, but not quite)
+
+Now let's just replace *box* with *M* (for Monadic Value), and String, Number, Boolean with a, b & c. We'll also change the signatures to be more generic.
+
+```haskell
+Func1 :: a -> Ma
+Func2 :: a -> Mb
+Func3 :: b -> Mc
+```
+
+So the only change to our functions is that they take 'regular' values and return *monadic* values.
+
+
 
