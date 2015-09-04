@@ -257,6 +257,13 @@ It's clear this won't work because Func3 expects a String, but Func2 returns a N
 What if we modified our functions to do something a little odd - they return their values, only in some kind of *box*:
 
 ```haskell
+Func1 :: String -> Box[String]
+Func2 :: String -> Box[Number]
+Func3 :: String -> Box[Boolean]
+```
+Now all we need to do is modify the parameters they take to be boxes as well:
+
+```haskell
 Func1 :: Box[String] -> Box[String]
 Func2 :: Box[String] -> Box[Number]
 Func3 :: Box[String] -> Box[Boolean]
@@ -274,7 +281,13 @@ Func3 :: Box[Anything, String] -> Box[Boolean, String]
 
 Now our functions can be combined willy-nilly just like mathematical functions! 
 
+But wait a minute - this is crazy! Why distort and boxify my nice, straight-forward functions just because of this threading business? That's nuts!!
 
+Well, because, unlike imperative programs, a purely functional program is just that - a series of functions that are threaded into eah other - one passing results to the next until the output of the program just pops out. And we all know that purely functional programs are the bees knees. That's why.
 
+In fact, apart from the simple easy building-block functions that perform a well-defined and small part of the program's task well, most of the (spaghetti) code we write are complicated functions whose only job is to take the result of one function and transform it appropriately for input into the next function. This code handles the *flow* of the program, and tends to be hard to grok and painful to maintain, as their internal logic is almost entirely dependent on the functions they connect together. We all know what happens when the internals of one function are very dependent on that of another - changes to one part spread with epidemic proportions and speed across the entire pogram.
 
+Wouldn't it be wonderful if we could *abstract* this glue code into a general form that allows us to thread functions with different signatures accroding to some general patterns? Then our code could just be composed of simple *worker* functions and a generic threading framework.
+
+Well, that's exactly what Monads do.
 
