@@ -2,8 +2,7 @@
   (:require [clojure.algo.monads :refer :all]
             [clojure.string :as string]
             [clojure.tools.trace :as trace]
-            [clojure.pprint :as pprint])
-  (:gen-class))
+            [clojure.pprint :as pprint]))
 
 ;;; Utility methods
 (defn extract [element code]

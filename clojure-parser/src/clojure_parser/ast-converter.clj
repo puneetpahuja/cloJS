@@ -2,7 +2,8 @@
   (:require [clojure-parser.core :as ast-gen]
             [clojure.tools.trace :as trace]
             [clojure.pprint :as pprint]
-            [clojure-parser.utilities :refer :all]))
+            [clojure-parser.utilities :refer :all])
+  (:gen-class))
 
 (declare get-form get-return-form get-forms)
 
@@ -32,7 +33,7 @@
     (number? value) (get-literal value 'number)
     (string? value) (get-literal value 'string)
     (instance? Boolean value) (get-literal value 'boolean)
-    (nil? value) (get-literal 'nil)
+    (= :nil value) (get-literal nil 'nil)
     true (get-identifier value)))
 
   ([value type]
@@ -117,16 +118,21 @@
    "callee" (get-identifier (operator form))
    "arguments" (get-forms (operands form))})
 
-(defn get-form [form]
+(defn get-exp [form]
+  {"type" "ExpressionStatement"
+   "expression" (get-form form)})
+
+(defn get-form [form & {:keys [top-level-form] :or {top-level-form false}}]
   (cond
    (literal? form) (get-literal form)
    (def? form) (get-def form)
-   (operator? form) (get-operator form)
    (if? form) (get-if form)
+   top-level-form (get-exp form)
+   (operator? form) (get-operator form)
    (fn-call? form) (get-fn-call form)))
 
-(defn get-forms [forms]
-  (into [] (map get-form forms)))
+(defn get-forms [forms & {:keys [top-level-forms] :or {top-level-forms false}}]
+  (into [] (map #(get-form % :top-level-form top-level-forms) forms)))
 
 (defn get-program [body]
   {"type" "Program"
@@ -134,16 +140,15 @@
    "sourceType" "script"})
 
 (defn get-ast [ast]
-  (get-program (get-forms (:program ast))))
+  (get-program (get-forms (:program ast) :top-level-forms true)))
 
-(defn main []
+(defn -main []
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
   (def ast (ast-gen/-main "fact.clj"))
   ; (def ast (ast-gen/-main "test.clj"))
-  (println "Here's custom clojure AST:")
   (pprint/pprint ast)
-  (println "\n\nHere's the equivalent JS/ES AST:")
+  (println "\n\n\n\n")
   (pprint/pprint (get-ast ast)))
 
-(main)
+(-main)
