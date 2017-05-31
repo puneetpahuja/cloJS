@@ -18,3 +18,6 @@ function factorial (n)
 }
 
 factorial (a);
+
+def f = [1, 2, e, ["a", null, true], false];
+def g = {1:2, "a":b}

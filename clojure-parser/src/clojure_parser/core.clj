@@ -46,6 +46,18 @@
       [char (extract char code)]
       nil)))
 
+(defn parse-curly-bracket [code]
+  (let [char (first code)]
+    (if (= \{ char)
+      [char (extract char code)]
+      nil)))
+
+(defn parse-close-curly-bracket [code]
+  (let [char (first code)]
+    (if (= \} char)
+      [char (extract char code)]
+      nil)))
+
 (defn parse-round-bracket [code]
   (let [char (first code)]
     (if (= \( char)
@@ -143,6 +155,13 @@
       (= "< " operator) [:< (extract operator code)]
       :else nil)))
 
+(defn remove-last-nil
+  "Removes last nil from a map ast list if it resulted from the skip-none-or-more spaces"
+  [map-list]
+  (if (and (odd? (count map-list)) (nil? (last map-list)))
+    (butlast map-list)
+    map-list))
+
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
 
@@ -234,6 +253,17 @@
       closing-bracket (match-one parse-close-square-bracket)]
      (flatten (list :vector (filter #(not (= :skip %)) elements)))))
 
+  (def m-parse-map
+  "This matches vectors"
+  (domonad
+   [opening-bracket (match-one parse-curly-bracket)
+    elements (one-or-more (match-all m-argument
+                                     (skip-one-or-more parse-space)
+                                     m-argument
+                                     (skip-none-or-more parse-space)))
+    closing-bracket (match-one parse-close-curly-bracket)]
+   (flatten (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
+  
   (def m-argument
     "Matches the possible arguments of an s-expression"
     (domonad
@@ -244,6 +274,7 @@
                      parse-name
                      parse-string
                      m-parse-vector
+                     m-parse-map
                      parse-boolean)]
      arg))
 
@@ -457,8 +488,9 @@
 
 ; (trace/trace-ns 'clojure-parser.core)
 ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
+(trace/trace-vars remove-last-nil)
 
-(pprint/pprint (-main "fact.clj"))
+(pprint/pprint (-main "test.clj"))
 
 
 

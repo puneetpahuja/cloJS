@@ -122,12 +122,34 @@
   {"type" "ExpressionStatement"
    "expression" (get-form form)})
 
+(defn get-map-property [property]
+  {"type" "Property"
+   "key" (get-form (first property))
+   "computed" false
+   "value" (get-form (second property))
+   "kind" "init"
+   "method" false
+   "shorthand" false})
+
+(defn get-map-properties [properties]
+  (into [] (map get-map-property (partition 2 properties))))
+
+(defn get-map-ds [form]
+  {"type" "ObjectExpression"
+   "properties" (get-map-properties (operands form))})
+
+(defn get-vec [form]
+  {"type" "ArrayExpression"
+   "elements" (get-forms (operands form))})
+
 (defn get-form [form & {:keys [top-level-form] :or {top-level-form false}}]
   (cond
-   (literal? form) (get-literal form)
    (def? form) (get-def form)
    (if? form) (get-if form)
    top-level-form (get-exp form)
+   (vec? form) (get-vec form)
+   (map-ds? form) (get-map-ds form)
+   (literal? form) (get-literal form)
    (operator? form) (get-operator form)
    (fn-call? form) (get-fn-call form)))
 
@@ -145,7 +167,7 @@
 (defn -main []
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
-  (def ast (ast-gen/-main "fact.clj"))
+  (def ast (ast-gen/-main "test.clj"))
   ; (def ast (ast-gen/-main "test.clj"))
   (pprint/pprint ast)
   (println "\n\n\n\n")

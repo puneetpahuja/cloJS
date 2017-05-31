@@ -25,6 +25,8 @@
 (def literal? (complement exp?))
 (def if? (partial exp-type? 'if))
 (def def? (partial exp-type? :def))
+(def vec? (partial exp-type? :vector))
+(def map-ds? (partial exp-type? :map))
 
 (def operator-symbols #{'= '* '+ '- '/ '<= '>= '< '>})
 (def operators (into operator-symbols (map keyword operator-symbols)))
