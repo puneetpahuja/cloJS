@@ -128,8 +128,10 @@
      (nil? reserved-keyword) nil
       (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
       (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
+      (= "if" reserved-keyword) [:if (extract reserved-keyword code)]
+      (= "do" reserved-keyword) [:do (extract reserved-keyword code)]
       (= "defmacro" reserved-keyword) [:defmacro (extract reserved-keyword code)]
-      (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
+      ; (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
       (= "let" reserved-keyword) [:let (extract reserved-keyword code)]
       (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
@@ -161,6 +163,9 @@
   (if (and (odd? (count map-list)) (nil? (last map-list)))
     (butlast map-list)
     map-list))
+
+(defn list->map [list]
+  (assoc {} (first list) (into [] (second list))))
 
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
@@ -224,6 +229,8 @@
     (m-bind (m-seq parsers)
             (comp m-result flatten))))
 
+
+
 ;; Combined parsers
 (with-monad parser-m
   (def m-form
@@ -251,7 +258,7 @@
       elements (one-or-more (match-one m-argument
                                        (skip-one-or-more parse-space)))
       closing-bracket (match-one parse-close-square-bracket)]
-     (flatten (list :vector (filter #(not (= :skip %)) elements)))))
+     (list->map (list :vector (filter #(not (= :skip %)) elements)))))
 
   (def m-parse-map
   "This matches vectors"
@@ -262,7 +269,7 @@
                                      m-argument
                                      (skip-none-or-more parse-space)))
     closing-bracket (match-one parse-close-curly-bracket)]
-   (flatten (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
+   (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
   
   (def m-argument
     "Matches the possible arguments of an s-expression"
@@ -488,9 +495,9 @@
 
 ; (trace/trace-ns 'clojure-parser.core)
 ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
-(trace/trace-vars remove-last-nil)
+;(trace/trace-vars remove-last-nil)
 
-(pprint/pprint (-main "test.clj"))
+(pprint/pprint (-main "fact.clj"))
 
 
 

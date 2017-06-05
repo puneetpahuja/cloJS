@@ -5,12 +5,21 @@
             [clojure-parser.utilities :refer :all])
   (:gen-class))
 
+(comment TODO
+         write jsonify
+         send the json to esgenerate and get js code
+         write basic test cases so that regression testing is easy
+         macro support - check ast generator if it expands the macro(built-in and domonad))
+
+(comment BUGS
+         nested maps and arrays dont work - generator is broken)
+
 (declare get-form get-return-form get-forms)
 
-(defn jsonify []
+(defn jsonify [json-map]
   ; replace nil with null
-  ; replace = with === 
-)
+  ; replace = with ===
+  )
 
 (defn get-identifier [identifier]
    {"type" "Identifier"
@@ -19,6 +28,17 @@
 (defn get-block [body]
   {"type" "BlockStatement"
    "body" body})
+
+(defn get-do-common [form func]
+  (let [body (operands form)]
+    (get-block (conj (get-forms (butlast body) :do)
+                     (func (last body) :do)))))
+
+(defn get-do [form]
+  (get-do-common form get-form))
+
+(defn get-return-do [form]
+  (get-do-common form get-return-form))
 
 (defn get-literal-raw-value [value type]
   (condp = type
@@ -44,27 +64,22 @@
         operands (operands form)
         jst {"type" "BinaryExpression"
              "operator" (str operator)
-             "right" (get-form (last operands))}]
+             "right" (get-form (last operands) :op)}]
     (if (= (count operands) 2)
-      (assoc jst "left" (get-form (first operands)))
+      (assoc jst "left" (get-form (first operands) :op))
       (assoc jst "left" (get-operator {operator (butlast operands)})))))
 
 (defn get-return [argument]
   {"type" "ReturnStatement"
    "argument" argument})
 
-(defn get-return-operator [form]
-  (get-return (get-operator form)))
-
-(defn get-return-literal [form]
-  (get-return (get-literal form)))
 
 (defn get-if-common [form func]
   (let [body (operands form)]
     {"type" "IfStatement"
-     "test" (get-form (first body))
-     "consequent" (get-block [(func (second body))])
-     "alternate" (get-block [(func (last body))])}))
+     "test" (get-form (first body) :if-test)
+     "consequent" (func (second body) :if)
+     "alternate" (func (last body) :if)}))
 
 (defn get-if [form]
   (get-if-common form get-form))
@@ -72,14 +87,14 @@
 (defn get-return-if [form]
   (get-if-common form get-return-form))
 
-(defn get-return-form [form]
+(defn get-return-form [form parent]
   (cond (if? form) (get-return-if form)
-        (operator? form) (get-return-operator form)
-        (literal? form) (get-return-literal form)))
+        (do? form) (get-return-do form)
+        :else (get-return (get-form form :return))))
 
 (defn get-fn-body [forms]
-  (get-block (conj (into [] (map get-form (butlast forms)))
-                   (get-return-form (last forms)))))
+  (get-block (conj (get-forms (butlast forms) :defn)
+                   (get-return-form (last forms) :defn))))
 
 (def get-fn-param get-identifier)
 
@@ -105,7 +120,7 @@
     {"type" "VariableDeclaration"
      "declarations" [{"type" "VariableDeclarator"
                       "id" (get-identifier identifier)
-                      "init" (get-form value)}]
+                      "init" (get-form value :var)}]
      "kind" "var"}))
 
 (defn get-def [form]
@@ -116,17 +131,17 @@
 (defn get-fn-call [form]
   {"type" "CallExpression"
    "callee" (get-identifier (operator form))
-   "arguments" (get-forms (operands form))})
+   "arguments" (get-forms (operands form) :fn-call)})
 
 (defn get-exp [form]
   {"type" "ExpressionStatement"
-   "expression" (get-form form)})
+   "expression" (get-form form :exp)})
 
 (defn get-map-property [property]
   {"type" "Property"
-   "key" (get-form (first property))
+   "key" (get-form (first property) :map)
    "computed" false
-   "value" (get-form (second property))
+   "value" (get-form (second property) :map)
    "kind" "init"
    "method" false
    "shorthand" false})
@@ -140,21 +155,23 @@
 
 (defn get-vec [form]
   {"type" "ArrayExpression"
-   "elements" (get-forms (operands form))})
+   "elements" (get-forms (operands form) :vec)})
 
-(defn get-form [form & {:keys [top-level-form] :or {top-level-form false}}]
+(defn get-form [form parent]
   (cond
+   (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
    (def? form) (get-def form)
    (if? form) (get-if form)
-   top-level-form (get-exp form)
+   (do? form) (get-do form)
    (vec? form) (get-vec form)
    (map-ds? form) (get-map-ds form)
    (literal? form) (get-literal form)
    (operator? form) (get-operator form)
-   (fn-call? form) (get-fn-call form)))
+   (fn-call? form) (get-fn-call form)
+   :else {:not-a-form form}))
 
-(defn get-forms [forms & {:keys [top-level-forms] :or {top-level-forms false}}]
-  (into [] (map #(get-form % :top-level-form top-level-forms) forms)))
+(defn get-forms [forms parent]
+  (into [] (map #(get-form % parent) forms)))
 
 (defn get-program [body]
   {"type" "Program"
@@ -162,15 +179,15 @@
    "sourceType" "script"})
 
 (defn get-ast [ast]
-  (get-program (get-forms (:program ast) :top-level-forms true)))
+  (get-program (get-forms (:program ast) :program)))
 
 (defn -main []
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
+  ; (trace/trace-vars )
   (def ast (ast-gen/-main "test.clj"))
-  ; (def ast (ast-gen/-main "test.clj"))
   (pprint/pprint ast)
   (println "\n\n\n\n")
-  (pprint/pprint (get-ast ast)))
+  (print-json (get-ast ast)))
 
 (-main)
