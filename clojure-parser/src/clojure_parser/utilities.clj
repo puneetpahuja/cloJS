@@ -1,6 +1,7 @@
 (ns clojure-parser.utilities
   (:require [indent.indent :refer [indent-dispatch]]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint]
+            [clojure.data.json :as json]))
 
 (defn map->vector
   "Converts {key value} to [key value]. Map should have only one key-value pair."
@@ -54,3 +55,6 @@
 
 (defn clojure->js [symbol]
   (get clojure->js-map symbol symbol))
+
+(defn jsonify [json-map]
+  (json/write-str json-map))

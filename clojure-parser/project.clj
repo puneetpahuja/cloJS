@@ -5,7 +5,8 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [org.clojure/algo.monads "0.1.6"]
-                 [org.clojure/data.json "0.2.6"]]
+                 [org.clojure/data.json "0.2.6"]
+                 [me.raynes/conch "0.8.0"]]
   :main ^:skip-aot clojure-parser.ast-converter
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})

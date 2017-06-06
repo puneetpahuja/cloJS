@@ -3,7 +3,8 @@
             [clojure.tools.trace :as trace]
             [clojure.pprint :as pprint]
             [clojure-parser.utilities :refer :all]
-            [clojure.data.json :as json])
+            [clojure.string :as str]
+            [me.raynes.conch :refer [programs with-programs let-programs] :as sh])
   (:gen-class))
 
 (comment TODO
@@ -13,17 +14,9 @@
          BUGS
 
          DOC
-         you cant use "-" in function/variable names because the converted js code will give error. follow js naming conventions.
-
-         JSCODE
-         let fs = require ("fs");
-         let gen = require ("escodegen");
-         fs.writeFileSync("fact2.js", gen.generate(JSON.parse(fs.readFileSync("fact2.json", "utf8"))));)
+         you cant use "-" in function/variable names because the converted js code will give error. follow js naming conventions.)
 
 (declare get-form get-return-form get-forms)
-
-(defn jsonify [json-map]
-  (json/write-str json-map))
 
 (defn get-identifier [identifier]
    {"type" "Identifier"
@@ -189,12 +182,17 @@
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
   ; (trace/trace-vars )
-  (def ast (ast-gen/-main input-file))
-  (pprint/pprint ast)
-  (println "\n\n\n\n")
-  (let [js-ast-map (get-ast ast)
-        js-ast-json (jsonify js-ast-map)]
-    (print-json js-ast-map)
-    (spit (str input-file ".json") js-ast-json)))
+  (let [ast (ast-gen/-main input-file)
+        js-ast-map (get-ast ast)
+        js-ast-json (jsonify js-ast-map)
+        input-filename-parts (str/split input-file #"\.")
+        output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
+        output-file (str/join "." output-filename-parts)
+        json-name (str output-file ".json")
+        js-name (str output-file ".js")]
+    ; (print-json js-ast-json)
+    (spit json-name js-ast-json)
+    (programs node)
+    (node "src/clojure_parser/generate_js.js" json-name js-name)))
 
 (-main "fact.clj")

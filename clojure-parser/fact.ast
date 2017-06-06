@@ -1,5 +1,0 @@
-[{:def
-  [factorial
-   {:fn
-    [{:vector [n]}
-     {if [{= [n 0]} 1 {:* [n {factorial [{- [n 1]}]}]}]}]}]}]

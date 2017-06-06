@@ -14,7 +14,7 @@
 
 (factorial a)
 
-(defn print-multiple [x y z a b c]
+(defn print_multiple [x y z a b c]
   (if true
     (do (func x)
         (func y)
@@ -23,5 +23,5 @@
         (func b)
         (func c))))
 
-(def z (print-multiple (+ 1 2 3 4 5 6) "a" true [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}] nil {"a" 1 "b" [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}]}))
+(def z (print_multiple (+ 1 2 3 4 5 6) "a" true [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}] nil {"a" 1 "b" [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}]}))
 
