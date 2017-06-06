@@ -31,8 +31,9 @@
 (def map-ds? (partial exp-type? :map))
 (def do? (partial exp-type? :do))
 
-(def operator-symbols #{'= '* '+ '- '/ '<= '>= '< '>})
-(def operators (into operator-symbols (map keyword operator-symbols)))
+(def operators #{'= '* '+ '- '/ '<= '>= '< '>})
+;(def operator-symbols #{'= '* '+ '- '/ '<= '>= '< '>})
+;(def operators (into operator-symbols (map keyword operator-symbols)))
 
 (defn fn-call? [form]
   (and (exp? form) (symbol? (operator form))))
@@ -48,3 +49,8 @@
 
 (defn form-is? [form forms]
   (reduce #(or %1 (%2 form)) false forms))
+
+(def clojure->js-map {'= '===})
+
+(defn clojure->js [symbol]
+  (get clojure->js-map symbol symbol))

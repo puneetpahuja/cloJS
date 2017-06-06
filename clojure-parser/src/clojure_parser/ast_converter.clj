@@ -2,24 +2,28 @@
   (:require [clojure-parser.core :as ast-gen]
             [clojure.tools.trace :as trace]
             [clojure.pprint :as pprint]
-            [clojure-parser.utilities :refer :all])
+            [clojure-parser.utilities :refer :all]
+            [clojure.data.json :as json])
   (:gen-class))
 
 (comment TODO
-         write jsonify
-         send the json to esgenerate and get js code
          write basic test cases so that regression testing is easy
-         macro support - check ast generator if it expands the macro(built-in and domonad))
+         macro support - check ast generator if it expands the macro(built-in and domonad)
 
-(comment BUGS
-         nested maps and arrays dont work - generator is broken)
+         BUGS
+
+         DOC
+         you cant use "-" in function/variable names because the converted js code will give error. follow js naming conventions.
+
+         JSCODE
+         let fs = require ("fs");
+         let gen = require ("escodegen");
+         fs.writeFileSync("fact2.js", gen.generate(JSON.parse(fs.readFileSync("fact2.json", "utf8"))));)
 
 (declare get-form get-return-form get-forms)
 
 (defn jsonify [json-map]
-  ; replace nil with null
-  ; replace = with ===
-  )
+  (json/write-str json-map))
 
 (defn get-identifier [identifier]
    {"type" "Identifier"
@@ -63,7 +67,7 @@
   (let [operator (operator form)
         operands (operands form)
         jst {"type" "BinaryExpression"
-             "operator" (str operator)
+             "operator" (str (clojure->js operator))
              "right" (get-form (last operands) :op)}]
     (if (= (count operands) 2)
       (assoc jst "left" (get-form (first operands) :op))
@@ -181,13 +185,16 @@
 (defn get-ast [ast]
   (get-program (get-forms (:program ast) :program)))
 
-(defn -main []
+(defn -main [input-file]
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
   ; (trace/trace-vars )
-  (def ast (ast-gen/-main "test.clj"))
+  (def ast (ast-gen/-main input-file))
   (pprint/pprint ast)
   (println "\n\n\n\n")
-  (print-json (get-ast ast)))
+  (let [js-ast-map (get-ast ast)
+        js-ast-json (jsonify js-ast-map)]
+    (print-json js-ast-map)
+    (spit (str input-file ".json") js-ast-json)))
 
-(-main)
+(-main "fact.clj")

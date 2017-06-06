@@ -2,7 +2,8 @@
   (:require [clojure.algo.monads :refer :all]
             [clojure.string :as string]
             [clojure.tools.trace :as trace]
-            [clojure.pprint :as pprint]))
+            [clojure.pprint :as pprint])
+  (:gen-class))
 
 ;;; Utility methods
 (defn extract [element code]
@@ -148,13 +149,13 @@
 (defn parse-operator [code]
   (let [operator (re-find #"^[+-\\*\/=><][+-\\*\/=><]?\s" code)]
     (cond
-      (= "+ " operator) [:+ (extract operator code)]
-      (= "- " operator) [:- (extract operator code)]
-      (= "* " operator) [:* (extract operator code)]
-      (= "/ " operator) [:/ (extract operator code)]
-      (= "= " operator) [:= (extract operator code)]
-      (= "> " operator) [:> (extract operator code)]
-      (= "< " operator) [:< (extract operator code)]
+      (= "+ " operator) ['+ (extract operator code)]
+      (= "- " operator) ['- (extract operator code)]
+      (= "* " operator) ['* (extract operator code)]
+      (= "/ " operator) ['/ (extract operator code)]
+      (= "= " operator) ['= (extract operator code)]
+      (= "> " operator) ['> (extract operator code)]
+      (= "< " operator) ['< (extract operator code)]
       :else nil)))
 
 (defn remove-last-nil
