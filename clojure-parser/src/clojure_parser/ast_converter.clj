@@ -4,7 +4,8 @@
             [clojure.pprint :as pprint]
             [clojure-parser.utilities :refer :all]
             [clojure.string :as str]
-            [me.raynes.conch :refer [programs with-programs let-programs] :as sh])
+            [me.raynes.conch :refer [programs with-programs let-programs] :as sh]
+            [clojure.tools.cli :refer [cli]])
   (:gen-class))
 
 (comment TODO
@@ -14,7 +15,7 @@
          BUGS
 
          DOC
-         you cant use "-" in function/variable names because the converted js code will give error. follow js naming conventions.)
+         you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
 
 (declare get-form get-return-form get-forms)
 
@@ -178,21 +179,27 @@
 (defn get-ast [ast]
   (get-program (get-forms (:program ast) :program)))
 
-(defn -main [input-file]
+(defn -main [& args]
   ; (trace/trace-ns 'clojure-parser.ast-converter)
   ; (trace/trace-ns 'clojure-parser.utilities)
   ; (trace/trace-vars )
-  (let [ast (ast-gen/-main input-file)
-        js-ast-map (get-ast ast)
-        js-ast-json (jsonify js-ast-map)
-        input-filename-parts (str/split input-file #"\.")
-        output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
-        output-file (str/join "." output-filename-parts)
-        json-name (str output-file ".json")
-        js-name (str output-file ".js")]
-    ; (print-json js-ast-json)
-    (spit json-name js-ast-json)
-    (programs node)
-    (node "src/clojure_parser/generate_js.js" json-name js-name)))
+  (let [[opts args banner] (cli args
+                                ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
+                                 :default false :flag true])]
+    (let [input-file (first args)
+          ast (ast-gen/-main input-file)
+          js-ast-map (get-ast ast)
+          js-ast-json (jsonify js-ast-map)
+          input-filename-parts (str/split input-file #"\.")
+          output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
+          output-file (str/join "." output-filename-parts)
+          json-name (str output-file ".json")
+          js-name (str output-file ".js")]
+      ; (print-json js-ast-json)
+      (spit json-name js-ast-json)
+      (programs node)
+      (node "src/clojure_parser/generate_js.js" json-name js-name)
+      ;(node js-name)      
+      )))
 
-(-main "fact.clj")
+; (-main "fact.clj")
