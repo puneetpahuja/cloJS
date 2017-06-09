@@ -11,7 +11,8 @@
 (comment TODO
          write basic test cases so that regression testing is easy
          macro support - check ast generator if it expands the macro(built-in and domonad)
-
+         provide an option in the linux command whether he wants to run it or not
+         
          BUGS
 
          DOC
@@ -199,7 +200,8 @@
       (spit json-name js-ast-json)
       (programs node)
       (node "src/clojure_parser/generate_js.js" json-name js-name)
-      ;(node js-name)      
+      (println (node js-name))      
       )))
 
 ; (-main "fact.clj")
+
