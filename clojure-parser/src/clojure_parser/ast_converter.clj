@@ -101,16 +101,23 @@
   ; TODO generalize
   (into [] (map get-fn-param params)))
 
-(defn get-fn [form]
-  (let [operands (operands form)
-        identifier (first operands)
-        value (second operands)]
-    {"type" "FunctionDeclaration"
-     "id" (get-identifier identifier)
-     "params" (get-fn-params (:vector (first (:fn value))))
-     "body" (get-fn-body (rest (:fn value)))
-     "generator" false
-     "expression" false}))
+(defn get-fn [fn-body fn-id fn-type]
+  {"type" fn-type
+   "id" fn-id
+   "params" (get-fn-params (operands (first fn-body)))
+   "body" (get-fn-body (rest fn-body))
+   "generator" false
+   "expression" false
+   "async" false})
+
+(defn get-defn [form]
+  (let [defn-body (operands form)
+        fn-name (first defn-body)
+        fn-form (rest defn-body)]
+    (get-fn fn-form (get-identifier fn-name) "FunctionDeclaration")))
+
+(defn get-lambda [form]
+  (get-fn (operands form) nil "FunctionExpression"))
 
 (defn get-var [form]
   (let [operands (operands form)
@@ -124,7 +131,7 @@
 
 (defn get-def [form]
   (if (defn? form)
-    (get-fn form)
+    (get-defn form)
     (get-var form)))
 
 (defn get-fn-call [form]
@@ -159,10 +166,12 @@
 (defn get-form [form parent]
   (cond
    (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
+   (defn? form) (get-defn form)
    (def? form) (get-def form)
    (if? form) (get-if form)
    (do? form) (get-do form)
    (vec? form) (get-vec form)
+   (lambda? form) (get-lambda form)
    (map-ds? form) (get-map-ds form)
    (literal? form) (get-literal form)
    (operator? form) (get-operator form)
@@ -186,22 +195,25 @@
   ; (trace/trace-vars )
   (let [[opts args banner] (cli args
                                 ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
-                                 :default false :flag true])]
-    (let [input-file (first args)
-          ast (ast-gen/-main input-file)
-          js-ast-map (get-ast ast)
-          js-ast-json (jsonify js-ast-map)
-          input-filename-parts (str/split input-file #"\.")
-          output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
-          output-file (str/join "." output-filename-parts)
-          json-name (str output-file ".json")
-          js-name (str output-file ".js")]
-      ; (print-json js-ast-json)
-      (spit json-name js-ast-json)
-      (programs node)
-      (node "src/clojure_parser/generate_js.js" json-name js-name)
-      (println (node js-name))      
-      )))
+                                 :default false :flag true])
+        input-file (first args)
+        ast (ast-gen/-main input-file)
+        js-ast-map (get-ast ast)
+        js-ast-json (jsonify js-ast-map)
+        input-filename-parts (str/split input-file #"\.")
+        output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
+        output-file (str/join "." output-filename-parts)
+        json-name (str output-file ".json")
+        js-name (str output-file ".js")]
+    ;(print-json ast)
+                                        ;(print-json js-ast-json)
+    (spit json-name js-ast-json)
+    (programs node)
+    (node "src/clojure_parser/generate_js.js" json-name js-name)
+    (println (node js-name))
+    ))
 
-; (-main "fact.clj")
+(-main "lambda.clj")
+;(-main "dummy.clj")
+;(-main "fact.clj")
 

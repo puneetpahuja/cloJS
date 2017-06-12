@@ -498,7 +498,7 @@
 ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
 ;(trace/trace-vars remove-last-nil)
 
-;(pprint/pprint (-main "fact.clj"))
+(pprint/pprint (-main "lambda.clj"))
 
 
 

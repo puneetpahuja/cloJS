@@ -1,6 +1,3 @@
-(defmacro defn [func-name args body]
-  `(def ~func-name (fn ~args ~body)))
-
 (defmacro null? [arg]
   `(= ~arg null))
 

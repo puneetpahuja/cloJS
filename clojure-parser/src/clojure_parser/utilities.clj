@@ -19,15 +19,10 @@
 (defn exp-type? [type form]
   (and (exp? form) (= (operator form) type)))
 
-(defn defn? [form]
-  (and (exp? form)
-       (= :def (operator form))
-       (exp? (second (operands form)))
-       (= :fn (operator (second (operands form))))))
-
 (def literal? (complement exp?))
 (def if? (partial exp-type? :if))
 (def def? (partial exp-type? :def))
+(def defn? (partial exp-type? :defn))
 (def vec? (partial exp-type? :vector))
 (def map-ds? (partial exp-type? :map))
 (def do? (partial exp-type? :do))
@@ -58,3 +53,5 @@
 
 (defn jsonify [json-map]
   (json/write-str json-map))
+
+(def lambda? (partial exp-type? :fn))
