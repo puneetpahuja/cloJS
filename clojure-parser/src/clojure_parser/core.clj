@@ -496,10 +496,6 @@
 
 ; (trace/trace-ns 'clojure-parser.core)
 ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
-;(trace/trace-vars remove-last-nil)
+; (trace/trace-vars remove-last-nil)
 
-(pprint/pprint (-main "lambda.clj"))
-
-
-
-
+; (pprint/pprint (-main "input.clj"))

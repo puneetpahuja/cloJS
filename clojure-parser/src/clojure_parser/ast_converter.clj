@@ -9,14 +9,21 @@
   (:gen-class))
 
 (comment TODO
-         write basic test cases so that regression testing is easy
-         macro support - check ast generator if it expands the macro(built-in and domonad)
-         provide an option in the linux command whether he wants to run it or not
+         * write basic test cases so that regression testing is easy
+         * macro support - check ast generator if it expands the macro (built-in and domonad)
+         * provide an option in the linux command whether he wants to run the generated js file or not
          
          BUGS
-
+         * running the linux command takes a lot of time
+         * "(console.log process.argv[3])" is not generated correctly. its generated as
+           "{console.log [process.argv {:vector [3]}]}" instead of "{console.log [process.argv[3]]}"
+           fix - make "identifier[identifier]" as a separate entity
+         * cant generate a function with zero arguments like "(readline)"
+         
          DOC
-         you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
+         * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
+
+(def js-generator-script-string "let fs = require (\"fs\"); let gen = require (\"escodegen\"); fs.writeFileSync(process.argv[2], gen.generate(JSON.parse(fs.readFileSync(process.argv[1], \"utf8\"))));")
 
 (declare get-form get-return-form get-forms)
 
@@ -129,11 +136,6 @@
                       "init" (get-form value :var)}]
      "kind" "var"}))
 
-(defn get-def [form]
-  (if (defn? form)
-    (get-defn form)
-    (get-var form)))
-
 (defn get-fn-call [form]
   {"type" "CallExpression"
    "callee" (get-identifier (operator form))
@@ -166,17 +168,17 @@
 (defn get-form [form parent]
   (cond
    (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
-   (defn? form) (get-defn form)
-   (def? form) (get-def form)
-   (if? form) (get-if form)
-   (do? form) (get-do form)
-   (vec? form) (get-vec form)
-   (lambda? form) (get-lambda form)
-   (map-ds? form) (get-map-ds form)
-   (literal? form) (get-literal form)
+   (defn? form)     (get-defn form)
+   (def? form)      (get-var form)
+   (if? form)       (get-if form)
+   (do? form)       (get-do form)
+   (vec? form)      (get-vec form)
+   (lambda? form)   (get-lambda form)
+   (map-ds? form)   (get-map-ds form)
+   (literal? form)  (get-literal form)
    (operator? form) (get-operator form)
-   (fn-call? form) (get-fn-call form)
-   :else {:not-a-form form}))
+   (fn-call? form)  (get-fn-call form)
+   :else            {:not-a-form form}))
 
 (defn get-forms [forms parent]
   (into [] (map #(get-form % parent) forms)))
@@ -205,15 +207,16 @@
         output-file (str/join "." output-filename-parts)
         json-name (str output-file ".json")
         js-name (str output-file ".js")]
-    ;(print-json ast)
-                                        ;(print-json js-ast-json)
+    ; (print-json ast)
+    ; (print-json js-ast-json)
     (spit json-name js-ast-json)
     (programs node)
-    (node "src/clojure_parser/generate_js.js" json-name js-name)
-    (println (node js-name))
-    ))
+    ;(node "src/clojure_parser/generate_js.js" json-name js-name)
+    (node "-e" js-generator-script-string json-name js-name)
+    (println (node js-name))))
 
 (-main "lambda.clj")
 ;(-main "dummy.clj")
 ;(-main "fact.clj")
+
 
