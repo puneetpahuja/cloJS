@@ -1,0 +1,1 @@
+{"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"readline"},"arguments":[]}}],"sourceType":"script"}

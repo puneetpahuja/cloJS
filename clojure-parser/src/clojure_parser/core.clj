@@ -203,21 +203,24 @@
              (if values
                (into [value] values)
                [value])))
+  (defn nested-none-or-more
+    [parser]
+    (optional (nested-one-or-more parser)))
 
   (defn skip-one-or-more
     "Matches the parser on or more times until it fails, but doesn't return
      the values for binding"
     [parser]
     (domonad
-     [_ parser
-      _ (optional (skip-one-or-more parser))]
-     :skip))
+      [_ parser
+       _ (optional (skip-one-or-more parser))]
+      :skip))
 
   (defn skip-none-or-more
-     "Matches the same parser zero or more times until it fails,
+    "Matches the same parser zero or more times until it fails,
      then returns true."
-     [parser]
-     (optional (skip-one-or-more parser)))
+    [parser]
+    (optional (skip-one-or-more parser)))
 
   (defn match-one
     "Match at least one of the parsers in the given order, or fail"
@@ -237,73 +240,73 @@
   (def m-form
     "This matches the possible function names in an s-expression"
     (domonad
-     [name (match-one parse-keyword
-                      parse-reserved
-                      parse-name
-                      parse-operator)]
-     name))
+      [name (match-one parse-keyword
+                       parse-reserved
+                       parse-name
+                       parse-operator)]
+      name))
 
   (declare m-argument)
 
   (def m-parse-literal
     (domonad
-     [literal (match-one parse-string
-                         parse-number
-                         parse-boolean)]
-     (list :literal literal)))
+      [literal (match-one parse-string
+                          parse-number
+                          parse-boolean)]
+      (list :literal literal)))
 
   (def m-parse-vector
     "This matches vectors"
     (domonad
-     [opening-bracket (match-one parse-square-bracket)
-      elements (one-or-more (match-one m-argument
-                                       (skip-one-or-more parse-space)))
-      closing-bracket (match-one parse-close-square-bracket)]
-     (list->map (list :vector (filter #(not (= :skip %)) elements)))))
+      [opening-bracket (match-one parse-square-bracket)
+       elements (one-or-more (match-one m-argument
+                                        (skip-one-or-more parse-space)))
+       closing-bracket (match-one parse-close-square-bracket)]
+      (list->map (list :vector (filter #(not (= :skip %)) elements)))))
 
   (def m-parse-map
-  "This matches vectors"
-  (domonad
-   [opening-bracket (match-one parse-curly-bracket)
-    elements (one-or-more (match-all m-argument
-                                     (skip-one-or-more parse-space)
-                                     m-argument
-                                     (skip-none-or-more parse-space)))
-    closing-bracket (match-one parse-close-curly-bracket)]
-   (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
+    "This matches vectors"
+    (domonad
+      [opening-bracket (match-one parse-curly-bracket)
+       elements (one-or-more (match-all m-argument
+                                        (skip-one-or-more parse-space)
+                                        m-argument
+                                        (skip-none-or-more parse-space)))
+       closing-bracket (match-one parse-close-curly-bracket)]
+      (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
   
   (def m-argument
     "Matches the possible arguments of an s-expression"
     (domonad
-     [arg (match-one parse-number
-                     parse-ampersand
-                     parse-keyword
-                     parse-reserved
-                     parse-name
-                     parse-string
-                     m-parse-vector
-                     m-parse-map
-                     parse-boolean)]
-     arg))
+      [arg (match-one parse-number
+                      parse-ampersand
+                      parse-keyword
+                      parse-reserved
+                      parse-name
+                      parse-string
+                      m-parse-vector
+                      m-parse-map
+                      parse-boolean)]
+      arg))
 
   (def m-parse-expression
     "Matches s-expressions"
     (domonad
-     [_ (optional (match-one parse-space
-                             parse-newline))
-      opening-bracket (match-one parse-round-bracket)
-      name (match-one m-form)
-      _ (optional (match-one parse-space))
-      args (nested-one-or-more  (match-one (skip-one-or-more parse-newline)
-                                           parse-backtick
-                                           parse-deref
-                                           m-argument
-                                           m-parse-expression
-                                           (skip-one-or-more parse-space)))
-      closing-bracket (match-one parse-close-round-bracket)
-      _ (optional (match-one parse-space
-                             parse-newline))]
-     (concat (list :expr name) (filter #(not (= :skip %)) args)))))
+      [_ (optional (match-one parse-space
+                              parse-newline))
+       opening-bracket (match-one parse-round-bracket)
+       name (match-one m-form)
+       _ (optional (match-one parse-space))
+       args (nested-none-or-more  (match-one (skip-one-or-more parse-newline)
+                                             parse-backtick
+                                             parse-deref
+                                             m-argument
+                                             m-parse-expression
+                                             (skip-one-or-more parse-space)))
+       closing-bracket (match-one parse-close-round-bracket)
+       _ (optional (match-one parse-space
+                              parse-newline))]
+      (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
   (def m-parse-expression-my
     (domonad
@@ -494,8 +497,9 @@
     ;;                                 expression)))
     (assoc {} :program tree)))
 
-; (trace/trace-ns 'clojure-parser.core)
-; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
-; (trace/trace-vars remove-last-nil)
+                                        ;(trace/trace-ns 'clojure-parser.core)
 
-; (pprint/pprint (-main "input.clj"))
+                                        ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
+                                        ; (trace/trace-vars remove-last-nil)
+                                        ;(pprint/pprint (-main "fact.clj"))
+

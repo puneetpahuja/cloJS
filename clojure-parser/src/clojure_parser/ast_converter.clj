@@ -16,9 +16,8 @@
          BUGS
          * running the linux command takes a lot of time
          * "(console.log process.argv[3])" is not generated correctly. its generated as
-           "{console.log [process.argv {:vector [3]}]}" instead of "{console.log [process.argv[3]]}"
-           fix - make "identifier[identifier]" as a separate entity
-         * cant generate a function with zero arguments like "(readline)"
+         "{console.log [process.argv {:vector [3]}]}" instead of "{console.log [process.argv[3]]}"
+         fix - make "identifier[identifier]" as a separate entity
          
          DOC
          * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
@@ -91,7 +90,7 @@
   (get-if-common form get-form))
 
 (defn get-return-if [form]
-  (get-if-common form get-return-form))
+  (get-if-common form get-return-form)) 
 
 (defn get-return-form [form parent]
   (cond (if? form) (get-return-if form)
@@ -141,6 +140,7 @@
    "callee" (get-identifier (operator form))
    "arguments" (get-forms (operands form) :fn-call)})
 
+
 (defn get-exp [form]
   {"type" "ExpressionStatement"
    "expression" (get-form form :exp)})
@@ -155,7 +155,7 @@
    "shorthand" false})
 
 (defn get-map-properties [properties]
-  (into [] (map get-map-property (partition 2 properties))))
+  (into [] (map get-map-property (partition 2 properties)))) 
 
 (defn get-map-ds [form]
   {"type" "ObjectExpression"
@@ -192,9 +192,9 @@
   (get-program (get-forms (:program ast) :program)))
 
 (defn -main [& args]
-  ; (trace/trace-ns 'clojure-parser.ast-converter)
-  ; (trace/trace-ns 'clojure-parser.utilities)
-  ; (trace/trace-vars )
+                                        ; (trace/trace-ns 'clojure-parser.ast-converter)
+                                        ; (trace/trace-ns 'clojure-parser.utilities)
+                                        ; (trace/trace-vars )
   (let [[opts args banner] (cli args
                                 ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
                                  :default false :flag true])
@@ -207,15 +207,16 @@
         output-file (str/join "." output-filename-parts)
         json-name (str output-file ".json")
         js-name (str output-file ".js")]
-    ; (print-json ast)
-    ; (print-json js-ast-json)
+    (print-json ast)
+    (print-json js-ast-json)
     (spit json-name js-ast-json)
     (programs node)
-    ;(node "src/clojure_parser/generate_js.js" json-name js-name)
+                                        ;(node "src/clojure_parser/generate_js.js" json-name js-name)
     (node "-e" js-generator-script-string json-name js-name)
-    (println (node js-name))))
+                                        ;(println (node js-name))
+    ))
 
-(-main "lambda.clj")
+(-main "input.clj")
 ;(-main "dummy.clj")
 ;(-main "fact.clj")
 
