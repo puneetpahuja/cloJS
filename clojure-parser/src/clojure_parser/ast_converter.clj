@@ -207,17 +207,16 @@
         output-file (str/join "." output-filename-parts)
         json-name (str output-file ".json")
         js-name (str output-file ".js")]
-    (print-json ast)
-    (print-json js-ast-json)
+    ;; (print-json ast)
+    ;; (print-json js-ast-json)
     (spit json-name js-ast-json)
     (programs node)
-                                        ;(node "src/clojure_parser/generate_js.js" json-name js-name)
+    ;;(node "src/clojure_parser/generate_js.js" json-name js-name)
     (node "-e" js-generator-script-string json-name js-name)
-                                        ;(println (node js-name))
-    ))
+    (println (node js-name))))
 
-(-main "input.clj")
-;(-main "dummy.clj")
-;(-main "fact.clj")
+;;(-main "input.clj")
+;;(-main "dummy.clj")
+;;(-main "fact.clj")
 
 
