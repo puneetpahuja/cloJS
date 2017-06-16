@@ -259,8 +259,8 @@
     "This matches vectors"
     (domonad
       [opening-bracket (match-one parse-square-bracket)
-       elements (one-or-more (match-one m-argument
-                                        (skip-one-or-more parse-space)))
+       elements (none-or-more (match-one m-argument
+                                         (skip-one-or-more parse-space)))
        closing-bracket (match-one parse-close-square-bracket)]
       (list->map (list :vector (filter #(not (= :skip %)) elements)))))
 
@@ -268,10 +268,10 @@
     "This matches vectors"
     (domonad
       [opening-bracket (match-one parse-curly-bracket)
-       elements (one-or-more (match-all m-argument
-                                        (skip-one-or-more parse-space)
-                                        m-argument
-                                        (skip-none-or-more parse-space)))
+       elements (none-or-more (match-all m-argument
+                                         (skip-one-or-more parse-space)
+                                         m-argument
+                                         (skip-none-or-more parse-space)))
        closing-bracket (match-one parse-close-curly-bracket)]
       (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
   
@@ -501,5 +501,6 @@
 
                                         ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
                                         ; (trace/trace-vars remove-last-nil)
-                                        ;(pprint/pprint (-main "fact.clj"))
+                                        ; (pprint/pprint (-main "func_zero_args.clj"))
+
 

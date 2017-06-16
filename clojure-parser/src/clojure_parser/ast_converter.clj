@@ -12,12 +12,14 @@
          * write basic test cases so that regression testing is easy
          * macro support - check ast generator if it expands the macro (built-in and domonad)
          * provide an option in the linux command whether he wants to run the generated js file or not
+         * provide support for giving multiple js files at once in command line input
          
          BUGS
          * running the linux command takes a lot of time
          * "(console.log process.argv[3])" is not generated correctly. its generated as
          "{console.log [process.argv {:vector [3]}]}" instead of "{console.log [process.argv[3]]}"
          fix - make "identifier[identifier]" as a separate entity
+         * empty map gen gives error
          
          DOC
          * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
@@ -215,7 +217,7 @@
     (node "-e" js-generator-script-string json-name js-name)
     (println (node js-name))))
 
-;;(-main "input.clj")
+;;(-main "func_zero_args.clj")
 ;;(-main "dummy.clj")
 ;;(-main "fact.clj")
 
