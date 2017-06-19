@@ -9,6 +9,9 @@
   (:gen-class))
 
 (comment TODO
+         * support cond
+         * use arrow functions
+         * convert a script rather than run it (give an option for running)
          * write basic test cases so that regression testing is easy
          * macro support - check ast generator if it expands the macro (built-in and domonad)
          * provide an option in the linux command whether he wants to run the generated js file or not
@@ -22,7 +25,10 @@
          * empty map gen gives error
          
          DOC
-         * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.)
+         * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.
+
+         COMMIT
+         * make vars to const)
 
 (def js-generator-script-string "let fs = require (\"fs\"); let gen = require (\"escodegen\"); fs.writeFileSync(process.argv[2], gen.generate(JSON.parse(fs.readFileSync(process.argv[1], \"utf8\"))));")
 
@@ -57,11 +63,11 @@
 (defn get-literal
   ([value]
    (cond
-    (number? value) (get-literal value 'number)
-    (string? value) (get-literal value 'string)
-    (instance? Boolean value) (get-literal value 'boolean)
-    (= :nil value) (get-literal nil 'nil)
-    true (get-identifier value)))
+     (number? value)           (get-literal value 'number)
+     (string? value)           (get-literal value 'string)
+     (instance? Boolean value) (get-literal value 'boolean)
+     (= :nil value)            (get-literal nil 'nil)
+     :else                     (get-identifier value)))
 
   ([value type]
    (assoc {"type" "Literal" "value" value} "raw" (get-literal-raw-value value type))))
@@ -127,15 +133,15 @@
 (defn get-lambda [form]
   (get-fn (operands form) nil "FunctionExpression"))
 
-(defn get-var [form]
+(defn get-const [form]
   (let [operands (operands form)
         identifier (first operands)
         value (second operands)]
     {"type" "VariableDeclaration"
      "declarations" [{"type" "VariableDeclarator"
                       "id" (get-identifier identifier)
-                      "init" (get-form value :var)}]
-     "kind" "var"}))
+                      "init" (get-form value :const)}]
+     "kind" "const"}))
 
 (defn get-fn-call [form]
   {"type" "CallExpression"
@@ -169,18 +175,18 @@
 
 (defn get-form [form parent]
   (cond
-   (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
-   (defn? form)     (get-defn form)
-   (def? form)      (get-var form)
-   (if? form)       (get-if form)
-   (do? form)       (get-do form)
-   (vec? form)      (get-vec form)
-   (lambda? form)   (get-lambda form)
-   (map-ds? form)   (get-map-ds form)
-   (literal? form)  (get-literal form)
-   (operator? form) (get-operator form)
-   (fn-call? form)  (get-fn-call form)
-   :else            {:not-a-form form}))
+    (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
+    (defn? form)     (get-defn form)
+    (def? form)      (get-const form)
+    (if? form)       (get-if form)
+    (do? form)       (get-do form)
+    (vec? form)      (get-vec form)
+    (lambda? form)   (get-lambda form)
+    (map-ds? form)   (get-map-ds form)
+    (literal? form)  (get-literal form)
+    (operator? form) (get-operator form)
+    (fn-call? form)  (get-fn-call form)
+    :else            {:not-a-form form}))
 
 (defn get-forms [forms parent]
   (into [] (map #(get-form % parent) forms)))
@@ -194,9 +200,9 @@
   (get-program (get-forms (:program ast) :program)))
 
 (defn -main [& args]
-                                        ; (trace/trace-ns 'clojure-parser.ast-converter)
-                                        ; (trace/trace-ns 'clojure-parser.utilities)
-                                        ; (trace/trace-vars )
+  ;; (trace/trace-ns 'clojure-parser.ast-converter)
+  ;; (trace/trace-ns 'clojure-parser.utilities)
+  ;; (trace/trace-vars )
   (let [[opts args banner] (cli args
                                 ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
                                  :default false :flag true])
@@ -220,5 +226,3 @@
 ;;(-main "func_zero_args.clj")
 ;;(-main "dummy.clj")
 ;;(-main "fact.clj")
-
-
