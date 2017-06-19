@@ -10,7 +10,6 @@
 
 (comment TODO
          * support cond
-         * use arrow functions
          * convert a script rather than run it (give an option for running)
          * write basic test cases so that regression testing is easy
          * macro support - check ast generator if it expands the macro (built-in and domonad)
@@ -28,15 +27,15 @@
          * you cant use "-" in function/variable names because running the converted js code will give error. follow js naming conventions.
 
          COMMIT
-         * make vars to const)
+         * use arrow functions)
 
 (def js-generator-script-string "let fs = require (\"fs\"); let gen = require (\"escodegen\"); fs.writeFileSync(process.argv[2], gen.generate(JSON.parse(fs.readFileSync(process.argv[1], \"utf8\"))));")
 
 (declare get-form get-return-form get-forms)
 
 (defn get-identifier [identifier]
-   {"type" "Identifier"
-    "name" (str identifier)})
+  {"type" "Identifier"
+   "name" (str identifier)})
 
 (defn get-block [body]
   {"type" "BlockStatement"
@@ -92,7 +91,9 @@
     {"type" "IfStatement"
      "test" (get-form (first body) :if-test)
      "consequent" (func (second body) :if)
-     "alternate" (func (last body) :if)}))
+     "alternate" (if (= (count body) 2)
+                   nil
+                   (func (last body) :if))}))
 
 (defn get-if [form]
   (get-if-common form get-form))
@@ -112,36 +113,39 @@
 (def get-fn-param get-identifier)
 
 (defn get-fn-params [params]
-  ; TODO generalize
+                                        ; TODO generalize
   (into [] (map get-fn-param params)))
 
-(defn get-fn [fn-body fn-id fn-type]
-  {"type" fn-type
-   "id" fn-id
-   "params" (get-fn-params (operands (first fn-body)))
-   "body" (get-fn-body (rest fn-body))
+(defn get-arrow [fn-forms]
+  {"type" "ArrowFunctionExpression"
+   "id" nil
+   "params" (get-fn-params (operands (first fn-forms)))
+   "body" (get-fn-body (rest fn-forms))
    "generator" false
    "expression" false
    "async" false})
 
+(defn get-const-helper [identifier init]
+  {"type" "VariableDeclaration"
+   "declarations" [{"type" "VariableDeclarator"
+                    "id" (get-identifier identifier)
+                    "init" init}]
+   "kind" "const"})
+
 (defn get-defn [form]
   (let [defn-body (operands form)
         fn-name (first defn-body)
-        fn-form (rest defn-body)]
-    (get-fn fn-form (get-identifier fn-name) "FunctionDeclaration")))
+        fn-forms (rest defn-body)]
+    (get-const-helper fn-name (get-arrow fn-forms))))
 
 (defn get-lambda [form]
-  (get-fn (operands form) nil "FunctionExpression"))
+  (get-arrow (operands form)))
 
 (defn get-const [form]
   (let [operands (operands form)
         identifier (first operands)
-        value (second operands)]
-    {"type" "VariableDeclaration"
-     "declarations" [{"type" "VariableDeclarator"
-                      "id" (get-identifier identifier)
-                      "init" (get-form value :const)}]
-     "kind" "const"}))
+        value-form (second operands)]
+    (get-const-helper identifier (get-form value-form :const))))
 
 (defn get-fn-call [form]
   {"type" "CallExpression"
@@ -175,7 +179,7 @@
 
 (defn get-form [form parent]
   (cond
-    (and (form-is? form [vec? literal? operator? fn-call?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
+    (and (form-is? form [vec? literal? operator? fn-call? lambda?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
     (defn? form)     (get-defn form)
     (def? form)      (get-const form)
     (if? form)       (get-if form)
@@ -215,14 +219,15 @@
         output-file (str/join "." output-filename-parts)
         json-name (str output-file ".json")
         js-name (str output-file ".js")]
-    ;; (print-json ast)
+    (print-json ast)
     ;; (print-json js-ast-json)
     (spit json-name js-ast-json)
-    (programs node)
-    ;;(node "src/clojure_parser/generate_js.js" json-name js-name)
+    (programs node) 
     (node "-e" js-generator-script-string json-name js-name)
-    (println (node js-name))))
+    (println (slurp js-name))
+    ;;(println (node js-name))
+    ))
 
-;;(-main "func_zero_args.clj")
+(-main "test.clj")
 ;;(-main "dummy.clj")
 ;;(-main "fact.clj")
