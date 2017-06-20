@@ -1,0 +1,1 @@
+{"type":"Program","body":[{"type":"ExpressionStatement","expression":{"type":"CallExpression","callee":{"type":"Identifier","name":"a"},"arguments":[{"type":"Identifier","name":"[(:skip 3 :skip)]"}]}}],"sourceType":"script"}

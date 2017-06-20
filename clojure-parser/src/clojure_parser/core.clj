@@ -207,6 +207,11 @@
     [parser]
     (optional (nested-one-or-more parser)))
 
+  (defn skip-one [parser]
+    (domonad
+      [_ parser]
+      :skip))
+
   (defn skip-one-or-more
     "Matches the parser on or more times until it fails, but doesn't return
      the values for binding"
@@ -233,20 +238,28 @@
     (m-bind (m-seq parsers)
             (comp m-result flatten))))
 
-
-
 ;; Combined parsers
 (with-monad parser-m
+
+  (def m-parse-array-member
+    "Parses JavaScript array member accesses like a[3]"
+    (domonad
+      [array (match-one parse-name) 
+       elements (one-or-more (match-all (skip-one parse-square-bracket) (match-one parse-operator m-parse-expression m-argument) (skip-one parse-close-square-bracket)))]
+      ;;(list->map (list :array-member (list array (filter #(not (= :skip %)) elements))))
+      elements))
+  
   (def m-form
     "This matches the possible function names in an s-expression"
     (domonad
       [name (match-one parse-keyword
                        parse-reserved
+                       m-parse-array-member
                        parse-name
                        parse-operator)]
       name))
 
-  (declare m-argument)
+  (declare m-argument m-parse-expression)
 
   (def m-parse-literal
     (domonad
@@ -262,8 +275,9 @@
        elements (none-or-more (match-one m-argument
                                          (skip-one-or-more parse-space)))
        closing-bracket (match-one parse-close-square-bracket)]
-      (list->map (list :vector (filter #(not (= :skip %)) elements)))))
+      (list->map (list :vector (filter #(not (= :skip %)) elements)))))  
 
+  
   (def m-parse-map
     "This matches vectors"
     (domonad
@@ -282,6 +296,7 @@
                       parse-ampersand
                       parse-keyword
                       parse-reserved
+                      m-parse-array-member
                       parse-name
                       parse-string
                       m-parse-vector
@@ -497,10 +512,11 @@
     ;;                                 expression)))
     (assoc {} :program tree)))
 
-                                        ;(trace/trace-ns 'clojure-parser.core)
+;;(trace/trace-ns 'clojure-parser.core)
+;;(trace/untrace-vars mapify bind-args and-expand bind load-macros find-macro de-ref evalate evaluate de-reference expand-macro)
+;; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
+;;(trace/trace-vars remove-last-nil)
+;;(pprint/pprint (-main "test.clj"))
 
-                                        ; (trace/trace-vars -main expand-macro bind-args and-expand bind find-macro de-reference evalate evaluate de-ref)
-                                        ; (trace/trace-vars remove-last-nil)
-                                        ; (pprint/pprint (-main "func_zero_args.clj"))
 
 

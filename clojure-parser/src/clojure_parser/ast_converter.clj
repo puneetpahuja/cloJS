@@ -5,7 +5,7 @@
             [clojure-parser.utilities :refer :all]
             [clojure.string :as str]
             [me.raynes.conch :refer [programs with-programs let-programs] :as sh]
-            [clojure.tools.cli :refer [cli]])
+            [clojure.tools.cli :refer [cli]] :reload)
   (:gen-class))
 
 (comment TODO
@@ -15,6 +15,7 @@
          * macro support - check ast generator if it expands the macro (built-in and domonad)
          * provide an option in the linux command whether he wants to run the generated js file or not
          * provide support for giving multiple js files at once in command line input
+         * fix array-member-access
          
          BUGS
          * running the linux command takes a lot of time
@@ -203,15 +204,11 @@
 (defn get-ast [ast]
   (get-program (get-forms (:program ast) :program)))
 
-(defn -main [& args]
+(defn convert [input-file]
   ;; (trace/trace-ns 'clojure-parser.ast-converter)
   ;; (trace/trace-ns 'clojure-parser.utilities)
   ;; (trace/trace-vars )
-  (let [[opts args banner] (cli args
-                                ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
-                                 :default false :flag true])
-        input-file (first args)
-        ast (ast-gen/-main input-file)
+  (let [ast (ast-gen/-main input-file) 
         js-ast-map (get-ast ast)
         js-ast-json (jsonify js-ast-map)
         input-filename-parts (str/split input-file #"\.")
@@ -224,10 +221,15 @@
     (spit json-name js-ast-json)
     (programs node) 
     (node "-e" js-generator-script-string json-name js-name)
-    (println (slurp js-name))
+    ;;(println (slurp js-name))
     ;;(println (node js-name))
     ))
 
-(-main "test.clj")
-;;(-main "dummy.clj")
-;;(-main "fact.clj")
+(defn -main [& args]
+  (let [[opts args banner] (cli args
+                                ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
+                                 :default false :flag true])]
+    (doseq [file args]
+      (convert file))))
+
+;; (-main "test.clj" "dummy.clj" "fact.clj")
