@@ -238,17 +238,20 @@
     (m-bind (m-seq parsers)
             (comp m-result flatten))))
 
+(declare m-argument m-parse-expression)
+
 ;; Combined parsers
 (with-monad parser-m
 
   (def m-parse-array-member
     "Parses JavaScript array member accesses like a[3]"
     (domonad
-      [array (match-one parse-name) 
+      [array (match-one parse-name)
        elements (one-or-more (match-all (skip-one parse-square-bracket) (match-one parse-operator m-parse-expression m-argument) (skip-one parse-close-square-bracket)))]
-      ;;(list->map (list :array-member (list array (filter #(not (= :skip %)) elements))))
-      elements))
-  
+      (list->map (list :array-member (list array (filter #(not (= :skip %)) (flatten elements)))))
+      ;;elements
+      ))
+
   (def m-form
     "This matches the possible function names in an s-expression"
     (domonad
@@ -258,8 +261,6 @@
                        parse-name
                        parse-operator)]
       name))
-
-  (declare m-argument m-parse-expression)
 
   (def m-parse-literal
     (domonad
@@ -275,9 +276,9 @@
        elements (none-or-more (match-one m-argument
                                          (skip-one-or-more parse-space)))
        closing-bracket (match-one parse-close-square-bracket)]
-      (list->map (list :vector (filter #(not (= :skip %)) elements)))))  
+      (list->map (list :vector (filter #(not (= :skip %)) elements)))))
 
-  
+
   (def m-parse-map
     "This matches vectors"
     (domonad
@@ -288,7 +289,7 @@
                                          (skip-none-or-more parse-space)))
        closing-bracket (match-one parse-close-curly-bracket)]
       (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
-  
+
   (def m-argument
     "Matches the possible arguments of an s-expression"
     (domonad
@@ -323,31 +324,36 @@
                               parse-newline))]
       (concat (list :expr name) (filter #(not (= :skip %)) args)))))
 
-  (def m-parse-expression-my
-    (domonad
-     [_ (skip-one-or-more (match-one parse-space
-                                     parse-newline))
-      exp (match-one m-parse-literal
-                          m-parse-expression)
-      - (skip-one-or-more (match-one parse-space
-                                     parse-newline))]
-     exp))
+(def m-parse-expression-my
+  (domonad
+    [_ (skip-one-or-more (match-one parse-space
+                                    parse-newline))
+     exp (match-one m-parse-literal
+                    m-parse-expression)
+     - (skip-one-or-more (match-one parse-space
+                                    parse-newline))]
+    exp))
+
+(declare mapify)
+
+(defn mapify-helper [list arguments]
+  (let [argument (first list)]
+    (if (not-empty list)
+      (if (= clojure.lang.LazySeq (type argument))
+        (if (= :expr (first argument))
+          (mapify-helper (rest list) (conj arguments (mapify (rest argument))))
+          (mapify-helper (rest list) (conj arguments (mapify argument))))
+        (mapify-helper (rest list) (conj arguments argument)))
+      arguments)))
 
 ;;; Formatting methods
 (defn mapify
   "Takes an s-expression and returns a map of form-name to a vector of form-arguments"
   [lst]
   (assoc {} (first lst)
-         (loop [list (rest lst)
-                arguments []]
-           (let [argument (first list)]
-             (if (not-empty list)
-               (if (= clojure.lang.LazySeq (type argument))
-                 (if (= :expr (first argument))
-                   (recur (rest list) (conj arguments (mapify (rest argument))))
-                   (recur (rest list) (conj arguments (mapify argument))))
-                 (recur (rest list) (conj arguments argument)))
-               arguments)))))
+         (let [list (rest lst)
+               arguments []]
+           (mapify-helper list arguments))))
 
 ;;; Macro expansion
 (defn bind-args
@@ -363,71 +369,84 @@
       (conj (vec (butlast (butlast macro-args))) and-term))
     macro-args))
 
+(defn bind-helper [macro-args args accumalator]
+  (if (empty? macro-args)
+    (if (empty? args)
+      (apply assoc {} accumalator)
+      (let [last-key (last (butlast accumalator))
+            last-value (last accumalator)]
+        (assoc (apply assoc {} accumalator) last-key (conj args last-value))))
+    (bind-helper (rest macro-args)
+                 (rest args)
+                 (conj accumalator (first macro-args) (first args)))))
+
 (defn bind
   "Returns a map of the args in to the bindings in the macro definition"
   [macro-args args]
-  (loop [macro-args macro-args
-         args args
-         accumalator []]
-    (if (empty? macro-args)
-      (if (empty? args)
-        (apply assoc {} accumalator)
-        (let [last-key (last (butlast accumalator))
-              last-value (last accumalator)]
-          (assoc (apply assoc {} accumalator) last-key (conj args last-value))))
-      (recur (rest macro-args)
-             (rest args)
-             (conj accumalator (first macro-args) (first args))))))
+  (let [macro-args macro-args
+        args args
+        accumalator []]
+    (bind-helper macro-args args accumalator)))
+
+(defn load-macros-helper [expression remainder tree]
+  (if (empty? remainder)
+    (conj tree (mapify (rest expression)))
+    (if (not= \(  (first remainder))
+      (load-macros-helper expression
+                          (rest remainder)
+                          tree)
+      (let [exp (m-parse-expression remainder)]
+        (load-macros-helper (first exp)
+                            (apply str (rest exp))
+                            (conj tree (mapify (rest expression))))))))
 
 (defn load-macros
   "Adds macros from a string of code to the macro tree"
   [code]
   (let [exp (m-parse-expression code)]
-    (loop [expression (first exp)
-           remainder (apply str (rest exp))
-           tree []]
-      (if (empty? remainder)
-        (conj tree (mapify (rest expression)))
-        (if (not= \(  (first remainder))
-          (recur expression
-                 (rest remainder)
-                 tree)
-          (let [exp (m-parse-expression remainder)]
-            (recur (first exp)
-                   (apply str (rest exp))
-                   (conj tree (mapify (rest expression))))))))))
+    (let [expression (first exp)
+          remainder (apply str (rest exp))
+          tree []]
+      (load-macros-helper expression remainder tree))))
+
+(defn find-macro-helper [macros name]
+  (let [macro (first macros)]
+    (if (empty? macros)
+      nil
+      (if (= name (first (:defmacro macro)))
+        macro
+        (find-macro-helper (rest macros) name)))))
 
 (defn find-macro
   "Checks if the given name is a macro, returns the macro tree"
   [macros name]
-  (loop [macros macros
-         name name]
-    (let [macro (first macros)]
-      (if (empty? macros)
-        nil
-        (if (= name (first (:defmacro macro)))
-          macro
-          (recur (rest macros) name))))))
+  (let [macros macros
+        name name]
+    (find-macro-helper macros name)))
 
+(defn de-ref-helper [keys deref-string refs]
+  (if (empty? keys)
+    deref-string
+    (if (some #(= \@ %) (seq (str (first keys))))
+      (de-ref-helper (rest keys)
+                     (string/replace deref-string
+                                     (re-pattern (str ":de-ref " (name (first keys))))
+                                     (subs (str ((first keys) refs))
+                                           1
+                                           (dec (count (str ((first keys) refs))))))
+                     refs)
+      (de-ref-helper (rest keys)
+                     (string/replace deref-string
+                                     (re-pattern (str ":de-ref " (name (first keys))))
+                                     (str ((first keys) refs)))
+                     refs))))
 (defn de-ref
   "Helper function for de-reference"
   [refs body]
   (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
-    (loop [keys (keys refs)
-           deref-string deref-string]
-      (if (empty? keys)
-        deref-string
-        (if (some #(= \@ %) (seq (str (first keys))))
-          (recur (rest keys)
-               (string/replace deref-string
-                               (re-pattern (str ":de-ref " (name (first keys))))
-                               (subs (str ((first keys) refs))
-                                     1
-                                     (dec (count (str ((first keys) refs)))))))
-          (recur (rest keys)
-                 (string/replace deref-string
-                                 (re-pattern (str ":de-ref " (name (first keys))))
-                                 (str ((first keys) refs)))))))))
+    (let [keys (keys refs)
+          deref-string deref-string]
+      (de-ref-helper keys deref-string refs))))
 
 (defn evalate
   "Evaluates mapified expression"
@@ -436,16 +455,21 @@
     (clojure.pprint/pprint (apply str "Expand this: " exp))
     (eval exp)))
 
+(declare evaluate)
+
+(defn evaluate-helper [args evaluated-args func]
+  (let [arg (first args)]
+    (if (empty? args)
+      (apply (resolve (symbol (name func))) evaluated-args)
+      (if (map? arg)
+        (evaluate-helper (rest args) (conj evaluated-args (evaluate arg)) func)
+        (evaluate-helper (rest args) (conj evaluated-args arg) func)))))
+
 (defn evaluate [exp]
   (let [func (first (keys exp))]
-    (loop [args (func exp)
-           evaluated-args []]
-      (let [arg (first args)]
-        (if (empty? args)
-          (apply (resolve (symbol (name func))) evaluated-args)
-          (if (map? arg)
-            (recur (rest args) (conj evaluated-args (evaluate arg)))
-            (recur (rest args) (conj evaluated-args arg))))))))
+    (let [args (func exp)
+          evaluated-args []]
+      (evaluate-helper args evaluated-args func))))
 
 (declare ast)
 
@@ -470,38 +494,43 @@
       exp
       (de-reference macro parts))))
 
+(defn ast-helper
+  "Returns AST of the clojure code passed to it."
+  ([exp expression remainder tree macros]
+   (if (empty? remainder)
+     (if (= :defmacro (second expression))
+       (conj macros (mapify (rest expression)))
+       (conj tree (expand-macro (mapify (rest expression)) macros)))
+     (if (not= \(  (first remainder))
+       (ast-helper exp
+                   expression
+                   (rest remainder)
+                   tree
+                   macros)
+       (if (= :defmacro (second expression))
+         (let [exp (m-parse-expression remainder)]
+           (ast-helper exp
+                       (first exp)
+                       (apply str (rest exp))
+                       tree
+                       (conj macros (mapify (rest expression)))))
+         (let [exp (m-parse-expression remainder)]
+           (ast-helper exp
+                       (first exp)
+                       (apply str (rest exp))
+                       (conj tree (expand-macro (mapify (rest expression)) macros))
+                       macros)))))))
+
 ;;; Main methods
 (defn ast
   "Returns AST of the clojure code passed to it."
   ([code]
-     (loop [exp (m-parse-expression code)
-            expression (first exp)
-            remainder (apply str (rest exp))
-            tree []
-            macros (load-macros (slurp "macros"))]
-       (if (empty? remainder)
-         (if (= :defmacro (second expression))
-           (conj macros (mapify (rest expression)))
-           (conj tree (expand-macro (mapify (rest expression)) macros)))
-         (if (not= \(  (first remainder))
-           (recur exp
-                  expression
-                  (rest remainder)
-                  tree
-                  macros)
-           (if (= :defmacro (second expression))
-             (let [exp (m-parse-expression remainder)]
-               (recur exp
-                      (first exp)
-                      (apply str (rest exp))
-                      tree
-                      (conj macros (mapify (rest expression)))))
-             (let [exp (m-parse-expression remainder)]
-               (recur exp
-                      (first exp)
-                      (apply str (rest exp))
-                      (conj tree (expand-macro (mapify (rest expression)) macros))
-                      macros))))))))
+   (let [exp (m-parse-expression code)
+         expression (first exp)
+         remainder (apply str (rest exp))
+         tree []
+         macros (load-macros (slurp "macros"))]
+     (ast-helper exp expression remainder tree macros))))
 
 (defn -main
   "Clojure parser that returns an AST of the clojure code passed to it."

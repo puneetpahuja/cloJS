@@ -1,1 +1,2 @@
-a([(:skip 3 :skip)]);
+const a = b[3];
+a(b[4]);

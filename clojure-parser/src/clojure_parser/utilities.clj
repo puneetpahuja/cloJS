@@ -26,6 +26,7 @@
 (def vec? (partial exp-type? :vector))
 (def map-ds? (partial exp-type? :map))
 (def do? (partial exp-type? :do))
+(def array-member? (partial exp-type? :array-member))
 
 (def operators #{'= '* '+ '- '/ '<= '>= '< '>})
 ;(def operator-symbols #{'= '* '+ '- '/ '<= '>= '< '>})

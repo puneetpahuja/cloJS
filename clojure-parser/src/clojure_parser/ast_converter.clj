@@ -178,9 +178,17 @@
   {"type" "ArrayExpression"
    "elements" (get-forms (operands form) :vec)})
 
+(defn get-array-member [form]
+  (let [body (operands form)]
+    {"type" "MemberExpression"
+     "computed" true
+     "object" (get-identifier (first body))
+     "property" (get-form (first (second body)) :array-member)}))
+
 (defn get-form [form parent]
   (cond
-    (and (form-is? form [vec? literal? operator? fn-call? lambda?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
+    (and (form-is? form [vec? literal? operator? fn-call? lambda? array-member?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
+    (array-member? form) (get-array-member form)
     (defn? form)     (get-defn form)
     (def? form)      (get-const form)
     (if? form)       (get-if form)

@@ -10,6 +10,9 @@
 (defmacro empty? [coll]
   `(not (seq ~coll)))
 
+(defmacro cond [test exec & body]
+   `(if ~test ~exec (cond ~body)))
+
 (defmacro >= [x y]
   `(or (> ~x ~y) (= ~x ~y)))
 
