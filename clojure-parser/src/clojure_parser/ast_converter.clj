@@ -224,7 +224,7 @@
         output-file (str/join "." output-filename-parts)
         json-name (str output-file ".json")
         js-name (str output-file ".js")]
-    (print-json ast)
+    ;;(print-json ast)
     ;; (print-json js-ast-json)
     (spit json-name js-ast-json)
     (programs node) 

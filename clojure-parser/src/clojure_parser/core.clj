@@ -168,6 +168,8 @@
 (defn list->map [list]
   (assoc {} (first list) (into [] (second list))))
 
+(def map->list (comp first seq))
+
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
 
@@ -428,13 +430,19 @@
   (if (empty? keys)
     deref-string
     (if (some #(= \@ %) (seq (str (first keys))))
-      (de-ref-helper (rest keys)
-                     (string/replace deref-string
-                                     (re-pattern (str ":de-ref " (name (first keys))))
-                                     (subs (str ((first keys) refs))
-                                           1
-                                           (dec (count (str ((first keys) refs))))))
-                     refs)
+      (if ((first keys) refs)
+        (de-ref-helper (rest keys)
+                       (string/replace deref-string
+                                       (re-pattern (str ":de-ref " (subs (str (first keys)) 2)))
+                                       (subs (str ((first keys) refs))
+                                             1
+                                             (dec (count (str ((first keys) refs))))))
+                       refs)
+        (de-ref-helper (rest keys)
+                       (string/replace deref-string
+                                       "{cond [:de-ref body]}"
+                                       "")
+                       refs))
       (de-ref-helper (rest keys)
                      (string/replace deref-string
                                      (re-pattern (str ":de-ref " (name (first keys))))
@@ -492,7 +500,11 @@
         macro (find-macro macros (first (keys exp)))]
     (if (nil? macro)
       exp
-      (de-reference macro parts))))
+      (let [temp (map->list (de-reference macro parts))
+            args (second temp)]
+        (if (= (count args) 3)
+          (list->map [(first temp) [(first args) (second args) (expand-macro (last args) macros)]])
+          {:if [(first args) (second args)]})))))
 
 (defn ast-helper
   "Returns AST of the clojure code passed to it."
