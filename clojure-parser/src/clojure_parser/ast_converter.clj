@@ -9,19 +9,14 @@
   (:gen-class))
 
 (comment TODO
-         * support cond
-         * convert a script rather than run it (give an option for running)
+         * give an option for running the generated js file
          * write basic test cases so that regression testing is easy
          * macro support - check ast generator if it expands the macro (built-in and domonad)
-         * provide an option in the linux command whether he wants to run the generated js file or not
-         * provide support for giving multiple js files at once in command line input
-         * fix array-member-access
          
          BUGS
+         * make macro-expansion generic
+         * fix multidimension array access
          * running the linux command takes a lot of time
-         * "(console.log process.argv[3])" is not generated correctly. its generated as
-         "{console.log [process.argv {:vector [3]}]}" instead of "{console.log [process.argv[3]]}"
-         fix - make "identifier[identifier]" as a separate entity
          * empty map gen gives error
          
          DOC
@@ -126,27 +121,31 @@
    "expression" false
    "async" false})
 
-(defn get-const-helper [identifier init]
+(defn get-variable-declarator [[id value]]
+  {"type" "VariableDeclarator"
+   "id" (get-identifier id)
+   "init" value})
+
+(defn get-const-helper [const-pairs]
   {"type" "VariableDeclaration"
-   "declarations" [{"type" "VariableDeclarator"
-                    "id" (get-identifier identifier)
-                    "init" init}]
+   "declarations" (vec (map get-variable-declarator const-pairs))
    "kind" "const"})
 
 (defn get-defn [form]
   (let [defn-body (operands form)
         fn-name (first defn-body)
         fn-forms (rest defn-body)]
-    (get-const-helper fn-name (get-arrow fn-forms))))
+    (get-const-helper [[fn-name (get-arrow fn-forms)]])))
 
 (defn get-lambda [form]
   (get-arrow (operands form)))
 
+(defn get-const-forms [[id value]]
+  [id (get-form value :const)])
+
 (defn get-const [form]
-  (let [operands (operands form)
-        identifier (first operands)
-        value-form (second operands)]
-    (get-const-helper identifier (get-form value-form :const))))
+  (let [operands (partition 2 (operands form))]
+    (get-const-helper (map get-const-forms operands))))
 
 (defn get-fn-call [form]
   {"type" "CallExpression"
