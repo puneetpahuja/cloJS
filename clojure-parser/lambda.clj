@@ -10,6 +10,8 @@
                                                (console.log (* x x))
                                                (console.log 2)))
 
+(let a 2 b 5)
+
 (a 5)
 
 (b 6)

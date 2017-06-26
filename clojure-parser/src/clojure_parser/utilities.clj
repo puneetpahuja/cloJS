@@ -23,6 +23,7 @@
 (def if? (partial exp-type? :if))
 (def def? (partial exp-type? :def))
 (def defn? (partial exp-type? :defn))
+(def let? (partial exp-type? :let))
 (def vec? (partial exp-type? :vector))
 (def map-ds? (partial exp-type? :map))
 (def do? (partial exp-type? :do))

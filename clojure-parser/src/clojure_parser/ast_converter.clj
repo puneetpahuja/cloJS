@@ -123,7 +123,7 @@
 
 (defn get-variable-declarator [[id value]]
   {"type" "VariableDeclarator"
-   "id" (get-identifier id)
+   "id" (get-form id :const)
    "init" value})
 
 (defn get-const-helper [const-pairs]
@@ -146,6 +146,9 @@
 (defn get-const [form]
   (let [operands (partition 2 (operands form))]
     (get-const-helper (map get-const-forms operands))))
+
+(defn get-let [form]
+  (assoc (get-const form) "kind" "let"))
 
 (defn get-fn-call [form]
   {"type" "CallExpression"
@@ -190,6 +193,7 @@
     (array-member? form) (get-array-member form)
     (defn? form)     (get-defn form)
     (def? form)      (get-const form)
+    (let? form)      (get-let form)
     (if? form)       (get-if form)
     (do? form)       (get-do form)
     (vec? form)      (get-vec form)
