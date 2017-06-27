@@ -19,8 +19,8 @@ estool's npm package [escodegen](https://github.com/estools/escodegen) - it conv
 ## Syntax
 Our syntax | Converted JS code
 ---------- | -----------------
-```clojure
-(def a 5 b 6)
-``` | ```javascript
-const a = 5, b = 6
-```
+`(def a 5 b 6)` | `const a = 5, b = 6`
+
+
+
+
