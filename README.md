@@ -19,7 +19,10 @@ estool's npm package [escodegen](https://github.com/estools/escodegen) - it conv
 ## Syntax
 Our syntax | Converted JS code
 ---------- | -----------------
-`(def a 5 b 6)` | `const a = 5, b = 6`
+`(def a 5 b 6)` | `const a = 5, b = 6;`
+`(let y 1 z 2)` | `let y = 1, z = 2;`
+`(if true x y)` | `if (true) {x;} else {y;}`
+`(cond t1 e1 t2 e2 t3 e3)` | `if (t1) {e1;} else if (t2) {e2;} else if (t3) {e3;}
 
 
 
