@@ -10,13 +10,17 @@ This is for:
 You write Clojure syntax code using JavaScript functions and it is converted into a JS code.
 
 ## Components
-@Ramshreyas 's [seqingclojure](https://github.com/Ramshreyas/seqingclojure) - it makes the AST for the input code.
+Ramshreyas's [seqingclojure](https://github.com/Ramshreyas/seqingclojure) - it makes the AST for the input code.
 
 We use this AST to convert it into an equivalent JS AST in JSON format.
 
-@estool 's npm package [escodegen](https://github.com/estools/escodegen) - it converts the JS AST into JS code.
+estool's npm package [escodegen](https://github.com/estools/escodegen) - it converts the JS AST into JS code.
 
 ## Syntax
 Our syntax | Converted JS code
 ---------- | -----------------
-(def a 5 b 6) | const a = 5, b = 6
+```clojure
+(def a 5 b 6)
+``` | ```javascript
+const a = 5, b = 6
+```
