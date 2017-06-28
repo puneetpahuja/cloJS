@@ -3,10 +3,19 @@
             [clojure.pprint :as pprint]
             [clojure.data.json :as json]))
 
-(defn map->vector
-  "Converts {key value} to [key value]. Map should have only one key-value pair."
-  [map]
-  (into [] (first (seq map))))
+(defn coll->map [coll]
+  (assoc {} (first coll) (into [] (second coll))))
+
+(defn remove-last-nil
+  "Removes last nil from a map ast list if it resulted from the skip-none-or-more spaces"
+  [map-list]
+  (if (and (odd? (count map-list)) (nil? (last map-list)))
+    (butlast map-list)
+    map-list))
+
+(def map->vector
+  "Converts {key value} to [key value]. Map should have only one key-value pair." 
+  (comp first seq))
 
 (defn operator [form]
   (first (map->vector form)))

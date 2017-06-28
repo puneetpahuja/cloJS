@@ -2,7 +2,8 @@
   (:require [clojure.algo.monads :refer :all]
             [clojure.string :as string]
             [clojure.tools.trace :as trace]
-            [clojure.pprint :as pprint])
+            [clojure.pprint :as pprint]
+            [clojure-parser.utilities :refer :all])
   (:gen-class))
 
 ;;; Utility methods
@@ -158,18 +159,6 @@
       (= "< " operator) ['< (extract operator code)]
       :else nil)))
 
-(defn remove-last-nil
-  "Removes last nil from a map ast list if it resulted from the skip-none-or-more spaces"
-  [map-list]
-  (if (and (odd? (count map-list)) (nil? (last map-list)))
-    (butlast map-list)
-    map-list))
-
-(defn list->map [list]
-  (assoc {} (first list) (into [] (second list))))
-
-(def map->list (comp first seq))
-
 ;;; Parser monad
 (def parser-m (state-t maybe-m))
 
@@ -250,7 +239,7 @@
     (domonad
       [array (match-one parse-name)
        elements (one-or-more (match-all (skip-one parse-square-bracket) (match-one parse-operator m-parse-expression m-argument) (skip-one parse-close-square-bracket)))]
-      (list->map (list :array-member (list array (filter #(not (= :skip %)) (flatten elements)))))
+      (coll->map (list :array-member (list array (filter #(not (= :skip %)) (flatten elements)))))
       ;;elements
       ))
 
@@ -278,7 +267,7 @@
        elements (none-or-more (match-one m-argument
                                          (skip-one-or-more parse-space)))
        closing-bracket (match-one parse-close-square-bracket)]
-      (list->map (list :vector (filter #(not (= :skip %)) elements)))))
+      (coll->map (list :vector (filter #(not (= :skip %)) elements)))))
 
 
   (def m-parse-map
@@ -290,7 +279,7 @@
                                          m-argument
                                          (skip-none-or-more parse-space)))
        closing-bracket (match-one parse-close-curly-bracket)]
-      (list->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
+      (coll->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
 
   (def m-argument
     "Matches the possible arguments of an s-expression"
@@ -325,16 +314,6 @@
        _ (optional (match-one parse-space
                               parse-newline))]
       (concat (list :expr name) (filter #(not (= :skip %)) args)))))
-
-(def m-parse-expression-my
-  (domonad
-    [_ (skip-one-or-more (match-one parse-space
-                                    parse-newline))
-     exp (match-one m-parse-literal
-                    m-parse-expression)
-     - (skip-one-or-more (match-one parse-space
-                                    parse-newline))]
-    exp))
 
 (declare mapify)
 
@@ -405,44 +384,42 @@
 (defn load-macros
   "Adds macros from a string of code to the macro tree"
   [code]
-  (let [exp (m-parse-expression code)]
-    (let [expression (first exp)
-          remainder (apply str (rest exp))
-          tree []]
-      (load-macros-helper expression remainder tree))))
+  (let [exp (m-parse-expression code)
+        expression (first exp)
+        remainder (apply str (rest exp))
+        tree []]
+    (load-macros-helper expression remainder tree)))
 
-(defn find-macro-helper [macros name]
-  (let [macro (first macros)]
-    (if (empty? macros)
+(defn find-macro [macros exp]
+  (let [macro (first macros)
+        macro-body (operands macro) 
+        exp-args-num (count (operands exp))
+        macro-args-num (-> macro-body second operands count)
+        second-last-macro-arg (-> macro-body second operands butlast last)]
+    (cond
+      (empty? macros)
       nil
-      (if (= name (first (:defmacro macro)))
-        macro
-        (find-macro-helper (rest macros) name)))))
-
-(defn find-macro
-  "Checks if the given name is a macro, returns the macro tree"
-  [macros name]
-  (let [macros macros
-        name name]
-    (find-macro-helper macros name)))
+      (and (= (operator exp) (first macro-body))
+           (or (and
+                 (= second-last-macro-arg '&)
+                 (>= exp-args-num (dec macro-args-num)))
+               (and
+                 (not (= second-last-macro-arg '&))
+                 (= exp-args-num macro-args-num))))
+      macro
+      :else (find-macro (rest macros) exp))))
 
 (defn de-ref-helper [keys deref-string refs]
   (if (empty? keys)
     deref-string
     (if (some #(= \@ %) (seq (str (first keys))))
-      (if ((first keys) refs)
-        (de-ref-helper (rest keys)
-                       (string/replace deref-string
-                                       (re-pattern (str ":de-ref " (subs (str (first keys)) 2)))
-                                       (subs (str ((first keys) refs))
-                                             1
-                                             (dec (count (str ((first keys) refs))))))
-                       refs)
-        (de-ref-helper (rest keys)
-                       (string/replace deref-string
-                                       "{cond [:de-ref body]}"
-                                       "")
-                       refs))
+      (de-ref-helper (rest keys)
+                     (string/replace deref-string
+                                     (re-pattern (str ":de-ref " (subs (str (first keys)) 2)))
+                                     (subs (str ((first keys) refs))
+                                           1
+                                           (dec (count (str ((first keys) refs))))))
+                     refs)
       (de-ref-helper (rest keys)
                      (string/replace deref-string
                                      (re-pattern (str ":de-ref " (name (first keys))))
@@ -451,10 +428,9 @@
 (defn de-ref
   "Helper function for de-reference"
   [refs body]
-  (let [deref-string (str (assoc {} (first (first body)) (last (first body))))]
-    (let [keys (keys refs)
-          deref-string deref-string]
-      (de-ref-helper keys deref-string refs))))
+  (let [deref-string (str (assoc {} (first (first body)) (last (first body))))
+        keys (keys refs)] 
+    (de-ref-helper keys deref-string refs)))
 
 (defn evalate
   "Evaluates mapified expression"
@@ -474,10 +450,10 @@
         (evaluate-helper (rest args) (conj evaluated-args arg) func)))))
 
 (defn evaluate [exp]
-  (let [func (first (keys exp))]
-    (let [args (func exp)
-          evaluated-args []]
-      (evaluate-helper args evaluated-args func))))
+  (let [func (first (keys exp))
+        args (func exp)
+        evaluated-args []]
+    (evaluate-helper args evaluated-args func)))
 
 (declare ast)
 
@@ -496,42 +472,43 @@
 (defn expand-macro
   "If the supplied expression is a macro, returns the expanded form"
   [exp macros]
-  (let [parts (first (vals exp))
-        macro (find-macro macros (first (keys exp)))]
-    (if (nil? macro)
-      exp
-      (let [temp (map->list (de-reference macro parts))
-            args (second temp)]
-        (if (= (count args) 3)
-          (list->map [(first temp) [(first args) (second args) (expand-macro (last args) macros)]])
-          {:if [(first args) (second args)]})))))
+  (if (map? exp)
+    (let [parts (first (vals exp))
+          macro (find-macro macros exp)]
+      (if (nil? macro)
+        exp
+        (let [deref (de-reference macro parts)
+              op (operator deref)
+              operands (operands deref)]
+          (assoc {} op (vec (map #(expand-macro % macros) operands))))))
+    exp))
 
 (defn ast-helper
   "Returns AST of the clojure code passed to it."
-  ([exp expression remainder tree macros]
-   (if (empty? remainder)
-     (if (= :defmacro (second expression))
-       (conj macros (mapify (rest expression)))
-       (conj tree (expand-macro (mapify (rest expression)) macros)))
-     (if (not= \(  (first remainder))
-       (ast-helper exp
-                   expression
-                   (rest remainder)
-                   tree
-                   macros)
-       (if (= :defmacro (second expression))
-         (let [exp (m-parse-expression remainder)]
-           (ast-helper exp
-                       (first exp)
-                       (apply str (rest exp))
-                       tree
-                       (conj macros (mapify (rest expression)))))
-         (let [exp (m-parse-expression remainder)]
-           (ast-helper exp
-                       (first exp)
-                       (apply str (rest exp))
-                       (conj tree (expand-macro (mapify (rest expression)) macros))
-                       macros)))))))
+  [exp expression remainder tree macros]
+  (if (empty? remainder)
+    (if (= :defmacro (second expression))
+      (conj macros (mapify (rest expression)))
+      (conj tree (expand-macro (mapify (rest expression)) macros)))
+    (if (not= \(  (first remainder))
+      (ast-helper exp
+                  expression
+                  (rest remainder)
+                  tree
+                  macros)
+      (if (= :defmacro (second expression))
+        (let [exp (m-parse-expression remainder)]
+          (ast-helper exp
+                      (first exp)
+                      (apply str (rest exp))
+                      tree
+                      (conj macros (mapify (rest expression)))))
+        (let [exp (m-parse-expression remainder)]
+          (ast-helper exp
+                      (first exp)
+                      (apply str (rest exp))
+                      (conj tree (expand-macro (mapify (rest expression)) macros))
+                      macros))))))
 
 ;;; Main methods
 (defn ast
