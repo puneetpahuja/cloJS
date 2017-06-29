@@ -473,10 +473,10 @@
   "If the supplied expression is a macro, returns the expanded form"
   [exp macros]
   (if (map? exp)
-    (let [parts (first (vals exp))
+    (let [parts (operands exp)
           macro (find-macro macros exp)]
       (if (nil? macro)
-        exp
+        (assoc {} (operator exp) (vec (map #(expand-macro % macros) parts)))
         (let [deref (de-reference macro parts)
               op (operator deref)
               operands (operands deref)]
