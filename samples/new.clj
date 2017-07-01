@@ -1,0 +1,17 @@
+(def a [1 2 3 4])
+(def b a[2])
+(console.log a[3])
+
+(cond
+    (is_array_member form) (get_array_member form)
+    (is_defn form)     (get_defn form)
+    (is_def form)      (get_const form)
+    (is_if form)       (get_if form)
+    (is_do form)       (get_do form)
+    (is_vec form)      (get_vec form)
+    (is_lambda form)   (get_lambda form)
+    (is_map_ds form)   (get_map_ds form)
+    (is_literal form)  (get_literal form)
+    (is_operator form) (get_operator form)
+    (is_fn_call form)  (get_fn_call form)
+    true             nil)
