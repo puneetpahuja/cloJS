@@ -1,4 +1,4 @@
-(ns clojs.ast-converter
+(ns clojs.clojs
   (:require [clojs.ast-generator :as ast-gen]
             [clojure.tools.trace :as trace]
             [clojure.pprint :as pprint]
@@ -220,7 +220,7 @@
 
 (defn convert-string-common [code-str]
   (let  [js-ast (-> code-str
-                    ast-gen/ast
+                    ast-gen/generate-string
                     get-ast
                     jsonify)]
     (programs node)
@@ -238,11 +238,12 @@
     (spit js-name js-code)))
 
 (defn convert [& args]
-  (let [[opts args banner] (cli args
-                                ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
-                                 :default false :flag true])]
-    (doseq [file args]
-      (convert-one file))))
+  ;; (let [[opts args banner] (cli args
+  ;; ["-h" "--help" "Run as \"clojs <input_clojure_file.clj>\""
+  ;; :default false :flag true])]
+  (doseq [file args]
+    (convert-one file)))
+;; )
 
-(defn -main [& args]
-  (convert args))
+;; (defn -main [& args]
+;; (convert args))

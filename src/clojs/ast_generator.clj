@@ -3,7 +3,8 @@
             [clojure.string :as string]
             [clojure.tools.trace :as trace]
             [clojure.pprint :as pprint]
-            [clojs.utilities :refer :all])
+            [clojs.utilities :refer :all]
+            [clojure.java.io :as io])
   (:gen-class))
 
 ;;; Utility methods
@@ -518,13 +519,17 @@
          expression (first exp)
          remainder (apply str (rest exp))
          tree []
-         macros (load-macros (slurp "macros"))]
-     (assoc {} :program (ast-helper exp expression remainder tree macros)))))
+         macros (load-macros (slurp (io/resource "macros")))]
+     (ast-helper exp expression remainder tree macros))))
+
+(defn generate-string
+  "Clojure parser that returns an AST of the clojure code passed to it."
+  [code-str]
+  (assoc {} :program (ast code-str)))
 
 (defn generate
-  "Clojure parser that returns an AST of the clojure code passed to it."
-  [path]
-  (ast (slurp path)))
+  [file]
+  (generate-string (slurp file)))
 
 ;;(trace/trace-ns 'clojure-parser.core)
 ;;(trace/untrace-vars mapify bind-args and-expand bind load-macros find-macro de-ref evalate evaluate de-reference expand-macro)

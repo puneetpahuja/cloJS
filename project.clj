@@ -1,4 +1,4 @@
-(defproject clojs "0.1.0"
+(defproject clojs "0.1.4"
   :description "Converts Clojure code to JavaScript"
   :url "https://github.com/puneetpahuja/cloJS"
   :license {:name "Eclipse Public License"
@@ -9,6 +9,7 @@
                  [me.raynes/conch "0.8.0"]
                  [org.clojure/tools.cli "0.2.4"]
                  [org.clojure/tools.trace "0.7.9"]]
-  :main ^:skip-aot clojs.ast-converter
+  :resource-paths ["resources"]
+  :main ^:skip-aot clojs.clojs/convert
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}})
