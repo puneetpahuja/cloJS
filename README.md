@@ -1,4 +1,4 @@
-# clojs
+# `clojs` [![Clojars Project](https://img.shields.io/clojars/v/clojs.svg)](https://clojars.org/clojs)
 Combining the simplicity of Clojure syntax with the power of JavaScript libraries.
 
 ## Who is it for?
