@@ -32,11 +32,11 @@ With Maven:
 
 ## Bugs and Enhancements
 
-Please open issues against the [clojs repo on Github](https://github.com/puneetpahuja/cloJS/issues).
+Please open issues against the [cloJS repo on Github](https://github.com/puneetpahuja/cloJS/issues).
 
 ## Mailing List
 
-Please ask questions on the [clojs mailing list](https://groups.google.com/forum/#!forum/clojs).
+Please ask questions on the [cloJS mailing list](https://groups.google.com/forum/#!forum/clojs).
 
 
 
