@@ -52,13 +52,20 @@ You write Clojure syntax code using JavaScript functions and it is converted int
 The namespace for code conversion in the `clojs` library is `clojs.clojs`.
 
 ``` clj
-(require '[clojs.clojs :as cj])
+(require '[clojs.clojs :refer [convert convert-string] :as cj])
 ```
-Convert a code as a string snippet with `convert-string`. It takes a string(Clojure code) and returns a string(JavaScript code):
+Convert a code snippet as string with `convert-string`. It takes a string(Clojure code) and returns a string(JavaScript code):
 
 ```clj
+(convert-string "(def a 1)")
+=> const a = 1;
+```
+Convert one or more files containing code with `convert`. It takes the path of each input file as a string and creates the equivalent JavaScript file(.js) in the same folder as the input file:
 
-
+```clj
+(convert "a.clj" "b.clj")
+=> nil
+```
 ## Components
 1. Ramshreyas's [seqingclojure](https://github.com/Ramshreyas/seqingclojure) - it makes the AST for the input code.
 
@@ -73,6 +80,10 @@ Our syntax | Converted JS code
 `(let y 1 z 2)` | `let y = 1, z = 2;`
 `(if true x y)` | `if (true) {x;} else {y;}`
 `(cond t1 e1 t2 e2 t3 e3)` | `if (t1) {e1;} else if (t2) {e2;} else if (t3) {e3;}`
+
+## License
+
+Released under the Eclipse Public License: <https://github.com/puneetpahuja/cloJS/blob/master/LICENSE>
 
 
 
