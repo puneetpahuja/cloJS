@@ -218,7 +218,7 @@
 (defn get-ast [ast]
   (get-program (get-forms (:program ast) :program)))
 
-(defn convert-string-common [code-str]
+(defn convert-string [code-str]
   (let  [js-ast (-> code-str
                     ast-gen/generate-string
                     get-ast
@@ -226,15 +226,13 @@
     (programs node)
     (node "-e" js-generator-script js-ast)))
 
-(defn convert-string [code-str]
-  (println (convert-string-common code-str)))
 
 (defn convert-one [input-file]
   (let [input-filename-parts (str/split input-file #"\.")
         output-filename-parts (if (> (count input-filename-parts) 1) (vec (butlast input-filename-parts)) input-filename-parts)
         output-file (str/join "." output-filename-parts)
         js-name (str output-file ".js")
-        js-code (convert-string-common (slurp input-file))]
+        js-code (convert-string (slurp input-file))]
     (spit js-name js-code)))
 
 (defn convert [& args]

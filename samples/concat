@@ -1,0 +1,131 @@
+(def a 10)
+(def b "hello")
+(def c nil)
+(def d a)
+(def e (+ 1 2 3 4))
+(def f {"a" 1 "b" 2 "c" 3})
+(def g [1 2 3])
+
+(defn print_multiple [x y z a b c]
+  (if (= 1 1)
+    (do (console.log "x :" x)
+        (console.log "y :" y)
+        z)
+    (do (console.log "a :" a)
+        (console.log "b :" b)
+        (console.log "c :" c))))
+
+(def z (print_multiple (+ 1 2 3 4 5 6) "a" true [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}] nil {"a" 1 "b" [1 2 3 {"a" 1 "b" c "c" [1 2 {"x" 10 "y" [20 30]} 3]}]}))
+
+(console.log "z :" z)
+(def a 6)
+
+(defn factorial [n]
+  (if (= n 0)
+    1
+    (* n (factorial (- n 1)))))
+
+(console.log "factorial of" a "is" (factorial a))
+
+(defn a []
+    5)
+
+(console.log (a))(readline)
+
+(defn a [x]
+  (console.log x)
+  (console.log 1))
+
+(def b (fn [x]
+         (console.log (* x x))
+         (console.log 2)))
+
+(fn [x]
+         (console.log (+ 5 x))
+         (console.log 5))
+(def a 5 b 6 c (+ 1 2) d (fun 5 6 (+ 1 2)) e (fn [x]
+                                               (console.log (* x x))
+                                               (console.log 2)))
+
+(let a 2 b 5)
+
+(a 5)
+
+(b 6)
+(defn a [x]
+  (let c 2)
+  (+ x c))
+
+(console.log (a 10))
+(def a [1 2 3 4])
+(def b a[2])
+(console.log a[3])
+
+(fn [x] (cond
+    (is_array_member form) (do (get_array_member form) (+ 1 2))
+    (is_defn form)     (get_defn form)
+    (is_def form)      (get_const form)
+    (is_if form)       (get_if form)
+    (is_do form)       (get_do form)
+    (is_vec form)      (get_vec form)
+    (is_lambda form)   (get_lambda form)
+    (is_map_ds form)   (get_map_ds form)
+    (is_literal form)  (get_literal form)
+    (is_operator form) (get_operator form)
+    (is_fn_call form)  (get_fn_call form)
+    true             nil))
+(def a 5)
+(def aa 1.4)
+(def aaa 104)
+(def b a)
+(def c "ee")
+(def d true)
+(def e nil)
+(def f [5 6])
+(def ff (list 5 6))
+(def g {e 5 1 6})
+(defn square [x]
+  (* x x))
+
+(def square (fn [x] (* x x)))
+
+(square 5)
+
+(null? 3)
+
+(defmacro m-bind [mv mf]
+  (conj (list ~mv test) ~mf))
+
+(m-bind mvv mff)
+
+(defmacro defmonad [name mbind mresult]
+  `(def ~name (list ~mbind ~mresult)))
+
+(defmonad identity
+  (fn [mv mf] (mf mv))
+  (fn [x] x))
+(def a b[3])
+(a b[4])
+(def a 1)
+(def a (func 5))
+(func 5 4)
+(def a (+ 1 2))
+(+ 12 13)
+
+(cond 1 (+ 2 2) 3 4 (+ 5 5) 6 7 8)
+
+(do
+  (def a 1)
+  (def b 2))
+
+(defn print-multiple [x y z a b c]
+  (if true
+    (do (func x)
+        (func y)
+        (func z))
+    (do (func a)
+        (func b)
+        (func c))))
+(def a [1 2 3 [10 20 [100 200 [1000 2000] 300] 30 [100 200 [1000 2000] 300] 40] 4 [10 20] 5])
+
+(def b {a {b 1}})

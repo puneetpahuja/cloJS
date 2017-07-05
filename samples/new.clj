@@ -2,8 +2,8 @@
 (def b a[2])
 (console.log a[3])
 
-(cond
-    (is_array_member form) (get_array_member form)
+(fn [x] (cond
+    (is_array_member form) (do (get_array_member form) (+ 1 2))
     (is_defn form)     (get_defn form)
     (is_def form)      (get_const form)
     (is_if form)       (get_if form)

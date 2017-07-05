@@ -1,6 +1,6 @@
 (def a 5)
 (def aa 1.4)
-(def aaa 10/4)
+(def aaa 104)
 (def b a)
 (def c "ee")
 (def d true)
