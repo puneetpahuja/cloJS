@@ -1,6 +1,5 @@
 # `cloJS` [![Clojars Project](https://img.shields.io/clojars/v/clojs.svg)](https://clojars.org/clojs)
-A library for Clojure to convert Clojure code to JavaScript.
-Combining the simplicity of Clojure syntax with the power of JavaScript libraries.
+A library for Clojure to convert Clojure code to JavaScript. It combines the simplicity of Clojure syntax with the power of JavaScript libraries. So all the function calls are of JavaScript.
 
 ## Artifacts
 `clojs` artifacts are [released to Clojars](https://clojars.org/clojs/clojs).
@@ -38,15 +37,27 @@ Please open issues against the [cloJS repo on Github](https://github.com/puneetp
 
 Please ask questions on the [cloJS mailing list](https://groups.google.com/forum/#!forum/clojs).
 
-
-
 ## Who is it for?
 This is for:
-  - JavaScript programmers who want to use simple lisp-like functional syntax of clojure. You can call all the javascript functions.
-  - Clojure programmers who want to use JavaScript functions and libraries.
+  - JavaScript programmers who want to use simple LISP like syntax of clojure. All the JavaScript functions can be called.
+  - Clojure programmers who want to use JavaScript functions and libraries without learning JavaScript syntax.
 
 ## Introduction
-You write Clojure syntax code using JavaScript functions and it is converted into a JS code.
+You write Clojure syntax code using JavaScript functions and it is converted into JavaScript code.
+
+## Usage
+
+### clojs.clojs
+
+The namespace for code conversion in the `clojs` library is `clojs.clojs`.
+
+``` clj
+(require '[clojs.clojs :as cj])
+```
+Convert a code as a string snippet with `convert-string`. It takes a string(Clojure code) and returns a string(JavaScript code):
+
+```clj
+
 
 ## Components
 1. Ramshreyas's [seqingclojure](https://github.com/Ramshreyas/seqingclojure) - it makes the AST for the input code.
