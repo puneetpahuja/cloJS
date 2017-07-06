@@ -38,15 +38,24 @@
 (def do? (partial exp-type? :do))
 (def array-member? (partial exp-type? :array-member))
 
-(def operators #{'= '* '+ '- '/ '<= '>= '< '>})
-;(def operator-symbols #{'= '* '+ '- '/ '<= '>= '< '>})
-;(def operators (into operator-symbols (map keyword operator-symbols)))
+(def binary-operators #{'* '+ '- '/ 'mod
+                        '<= '>= '< '>
+                        '= '!= '!== '== 
+                        'in 'instanceof})
+
+(def logical-operators #{'and 'or})
+
+(def unary-operators #{'not 'typeof})
 
 (defn fn-call? [form]
   (and (exp? form) (symbol? (operator form))))
 
-(defn operator? [form]
+(defn operator-common? [operators form]
   (and (exp? form) (contains? operators (operator form))))
+
+(def binary-operator? (partial operator-common? binary-operators))
+(def logical-operator? (partial operator-common? logical-operators))
+(def unary-operator? (partial operator-common? unary-operators))
 
 (defn quotify [value]
   (str \" value \"))
@@ -57,7 +66,10 @@
 (defn form-is? [form forms]
   (reduce #(or %1 (%2 form)) false forms))
 
-(def clojure->js-map {'= '===})
+(defn operator? [form]
+  (form-is? form [binary-operator? logical-operator? unary-operator?]))
+
+(def clojure->js-map {'= '=== 'mod '% 'and '&& 'or '|| 'not '!})
 
 (defn clojure->js [symbol]
   (get clojure->js-map symbol symbol))

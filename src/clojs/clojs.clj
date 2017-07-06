@@ -70,15 +70,29 @@
   ([value type]
    (assoc {"type" "Literal" "value" value} "raw" (get-literal-raw-value value type))))
 
-(defn get-operator [form]
+(defn get-operator-common [form type]
   (let [operator (operator form)
         operands (operands form)
-        jst {"type" "BinaryExpression"
+        jst {"type" type
              "operator" (str (clojure->js operator))
              "right" (get-form (last operands) :op)}]
     (if (= (count operands) 2)
       (assoc jst "left" (get-form (first operands) :op))
       (assoc jst "left" (get-operator {operator (butlast operands)})))))
+
+(defn get-binary-operator [form]
+  (get-operator-common form "BinaryExpression"))
+
+(defn get-logical-operator [form]
+  (get-operator-common form "LogicalExpression"))
+
+(defn get-unary-operator [form]
+  (let [operator (operator form)
+        operand (first (operands form))]
+    {"type" "UnaryExpression"
+     "operator" (str (clojure->js operator))
+     "argument" (get-form operand :op)
+     "prefix" true}))
 
 (defn get-return [argument]
   {"type" "ReturnStatement"
@@ -193,19 +207,21 @@
 (defn get-form [form parent]
   (cond
     (and (form-is? form [vec? literal? operator? fn-call? lambda? array-member?]) (contains? #{:defn :if :do :program} parent)) (get-exp form)
-    (array-member? form) (get-array-member form)
-    (defn? form)     (get-defn form)
-    (def? form)      (get-const form)
-    (let? form)      (get-let form)
-    (if? form)       (get-if form)
-    (do? form)       (get-do form)
-    (vec? form)      (get-vec form)
-    (lambda? form)   (get-lambda form)
-    (map-ds? form)   (get-map-ds form)
-    (literal? form)  (get-literal form)
-    (operator? form) (get-operator form)
-    (fn-call? form)  (get-fn-call form)
-    :else            {:not-a-form form}))
+    (array-member? form)       (get-array-member form)
+    (defn? form)               (get-defn form)
+    (def? form)                (get-const form)
+    (let? form)                (get-let form)
+    (if? form)                 (get-if form)
+    (do? form)                 (get-do form)
+    (vec? form)                (get-vec form)
+    (lambda? form)             (get-lambda form)
+    (map-ds? form)             (get-map-ds form)
+    (literal? form)            (get-literal form)
+    (binary-operator? form)    (get-binary-operator form)
+    (logical-operator? form)   (get-logical-operator form)
+    (unary-operator? form)     (get-unary-operator form)
+    (fn-call? form)            (get-fn-call form)
+    :else                      {:not-a-form form}))
 
 (defn get-forms [forms parent]
   (into [] (map #(get-form % parent) forms)))
