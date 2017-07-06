@@ -158,7 +158,7 @@ As Clojure uses prefix notation you can give any number of arguments to the oper
 | `(in a b 1 1.2 c)`         | `a in b in 1 in 1.2 in c`                |
 | `(instanceof a b 1 1.2 c)` | `a instanceof b instanceof 1 instanceof 1.2 instanceof c` |
 | `(and a b 1 1.2 c)`        | `a && b && 1 && 1.2 && c`                |
-| `(or a b 1 1.2 c)`         | `a || b || 1 || 1.2 || c`                |
+| `(or a b 1 1.2 c)`         | `a` &#124;&#124; `b` &#124;&#124; `1` &#124;&#124; `1.2` &#124;&#124; `c`                |
 
 #### Unary Operators
 
