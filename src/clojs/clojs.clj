@@ -78,7 +78,7 @@
              "right" (get-form (last operands) :op)}]
     (if (= (count operands) 2)
       (assoc jst "left" (get-form (first operands) :op))
-      (assoc jst "left" (get-operator {operator (butlast operands)})))))
+      (assoc jst "left" (get-operator-common {operator (butlast operands)} type)))))
 
 (defn get-binary-operator [form]
   (get-operator-common form "BinaryExpression"))
@@ -239,6 +239,7 @@
                     ast-gen/generate-string
                     get-ast
                     jsonify)]
+    ;; (println js-ast)
     (programs node)
     (node "-e" js-generator-script js-ast)))
 

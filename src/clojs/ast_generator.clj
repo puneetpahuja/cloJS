@@ -128,13 +128,13 @@
 (defn parse-reserved [code]
   (let [reserved-keyword (first (parse-identifier code))]
     (cond
-     (nil? reserved-keyword) nil
+      (nil? reserved-keyword) nil
       (= "def" reserved-keyword) [:def (extract reserved-keyword code)]
       (= "defn" reserved-keyword) [:defn (extract reserved-keyword code)]
       (= "if" reserved-keyword) [:if (extract reserved-keyword code)]
       (= "do" reserved-keyword) [:do (extract reserved-keyword code)]
       (= "defmacro" reserved-keyword) [:defmacro (extract reserved-keyword code)]
-      ; (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
+      ;; (= "println" reserved-keyword) [:println (extract reserved-keyword code)]
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
       (= "let" reserved-keyword) [:let (extract reserved-keyword code)]
       (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
@@ -145,7 +145,7 @@
       (= "namespace" reserved-keyword) [:namespace (extract reserved-keyword code)]
       (= "keyword?" reserved-keyword) [:keyword? (extract reserved-keyword code)]
       (= "for" reserved-keyword) [:for (extract reserved-keyword code)]
-      (= "require" reserved-keyword) [:require (extract reserved-keyword code)]
+      ;; (= "require" reserved-keyword) [:require (extract reserved-keyword code)]
       :else nil)))
 
 (defn parse-operator [code]
