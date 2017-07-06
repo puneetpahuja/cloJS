@@ -103,6 +103,62 @@ No commas in Clojure. Nesting is supported.
 No semicolons or commas in Clojure. Nesting is supported.
 
 ### Operators
+#### Prefix Operators -> Binary Operators
+As Clojure uses prefix notation you can give any number of arguments to the operators. `clojs` requires them to be greater than or equal to two.
+Input | Output
+------|-------
+`(+ a b 1 1.2 c)` | `a + b + 1 + 1.2 + c`
+`(- a b 1 1.2 c)` | `a - b - 1 - 1.2 - c`
+`(* a b 1 1.2 c)` | `a * b * 1 * 1.2 * c`
+`(/ a b 1 1.2 c)` | `a / b / 1 / 1.2 / c`
+`(mod a b 1 1.2 c)` | `a % b % 1 % 1.2 % c`
+`(< a b 1 1.2 c)` | `a < b < 1 < 1.2 < c`
+`(<= a b 1 1.2 c)` | `a <= b <= 1 <= 1.2 <= c`
+`(> a b 1 1.2 c)` | `a > b > 1 > 1.2 > c`
+`(>= a b 1 1.2 c)` | `a >= b >= 1 >= 1.2 >= c`
+`(= a b 1 1.2 c)` | `a === b === 1 === 1.2 === c`
+`(== a b 1 1.2 c)` | `a == b == 1 == 1.2 == c`
+`(!== a b 1 1.2 c)` | `a !== b !== 1 !== 1.2 !== c`
+`(!= a b 1 1.2 c)` | `a != b != 1 != 1.2 != c`
+`(in a b 1 1.2 c)` | `a in b in 1 in 1.2 in c`
+`(instanceof a b 1 1.2 c)` | `a instanceof b instanceof 1 instanceof 1.2 instanceof c`
+`(and a b 1 1.2 c)` | `a && b && 1 && 1.2 && c`
+`(or a b 1 1.2 c)` | `a || b || 1 || 1.2 || c`
+
+#### Unary Operators
+Input | Output
+------|-------
+`(not a)` | `!a`
+`(typeof a)` | `typeof a`
+
+### `if` statement
+```clj
+(if (= n 0)
+  true
+  false)
+```
+```javascript
+if (n === 0)
+  true;
+else
+  false;
+```
+### Function Call
+
+### Block Statement
+
+### Function Definition
+
+```clj
+(defn factorial [n]
+  (if (= n 0)
+    1
+    (* n (factorial (- n 1)))))
+
+(console.log "factorial of" a "is" (factorial a))
+```
+->
+```javascript
 
 
 ## Components
