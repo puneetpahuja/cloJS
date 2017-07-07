@@ -1,3 +1,5 @@
+(def fs (require "fileSystem"))
+
 (def a 10)
 (def b "hello")
 (def c nil)

@@ -15,6 +15,7 @@
          * macro support - check ast generator if it expands the macro (built-in and domonad)
 
          BUGS
+         * "(def a {u (a 1) b 2})"
          * make macro-expansion generic
          * fix multidimension array access
          * running the linux command takes a lot of time
