@@ -15,9 +15,9 @@
 
 ;;; Element parsers
 (defn parse-newline [code]
-    (if (= \newline (first code))
-      [\newline (apply str (rest code))]
-      nil))
+  (if (= \newline (first code))
+    [\newline (apply str (rest code))]
+    nil))
 
 (defn parse-space [code]
   (let [space (re-find #"^\s+" code)]
@@ -277,7 +277,7 @@
       [opening-bracket (match-one parse-curly-bracket)
        elements (none-or-more (match-all m-argument
                                          (skip-one-or-more parse-space)
-                                         m-argument
+                                         (match-one m-parse-expression m-argument)
                                          (skip-none-or-more parse-space)))
        closing-bracket (match-one parse-close-curly-bracket)]
       (coll->map (list :map (remove-last-nil (filter #(not (= :skip %)) (flatten elements)))))))
@@ -466,9 +466,9 @@
         macro-body (last (:defmacro macro))
         reference-map (bind macro-args parts)
         expanded-form (de-ref reference-map macro-body)]
-      (if (= :escape-macro-body escape)
-        (read-string expanded-form)
-        (first (ast (str (evaluate (read-string expanded-form))))))))
+    (if (= :escape-macro-body escape)
+      (read-string expanded-form)
+      (first (ast (str (evaluate (read-string expanded-form))))))))
 
 (defn expand-macro
   "If the supplied expression is a macro, returns the expanded form"
