@@ -1,4 +1,4 @@
-(defproject clojs "0.1.5"
+(defproject clojs "0.1.6-SNAPSHOT"
   :description "Converts Clojure code to JavaScript"
   :url "https://github.com/puneetpahuja/cloJS"
   :license {:name "Eclipse Public License"
