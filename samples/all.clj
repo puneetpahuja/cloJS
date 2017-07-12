@@ -5,7 +5,7 @@
 (def c nil)
 (def d a)
 (def e (+ 1 2 3 4))
-(def f {"a" 1 "b" 2 "c" 3})
+(def f {1 1 2 2 3 3})
 (def g [1 2 3])
 (def h g[2])
 
