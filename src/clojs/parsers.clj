@@ -25,10 +25,11 @@
       [(read-string number) (extract number code)])))
 
 (defn parse-string [code]
-  (let [string (last (re-find #"^\"([^\"]*)\"" code))]
+  (let [string (re-find #"^\".*?(?<!\\)\"" code)]
+    ;; (println string (type string))
     (if (nil? string)
       nil
-      [string (apply str (drop (+ 2 (count string)) code))])))
+      [(subs string 1 (dec (count string))) (apply str (drop (count string) code))])))
 
 (defn parse-square-bracket [code]
   (let [char (first code)]
@@ -84,7 +85,7 @@
       [(symbol (str char)) (extract char code)])))
 
 (defn parse-identifier [code]
-  (let [identifier (re-find #"^[\w-.><=@]+[\\?]?" code)]
+  (let [identifier (re-find #"^[\w-.><=@!$]+[\\?]?" code)]
     (if (nil? identifier)
       nil
       [identifier (extract identifier code)])))
@@ -131,6 +132,7 @@
       (= "nil" reserved-keyword) [:nil (extract reserved-keyword code)]
       (= "let" reserved-keyword) [:let (extract reserved-keyword code)]
       (= "fn" reserved-keyword) [:fn (extract reserved-keyword code)]
+      (= "return" reserved-keyword) [:return (extract reserved-keyword code)]
       ;;(= "atom" reserved-keyword) [:atom (extract reserved-keyword code)]
       ;;(= "keyword" reserved-keyword) [:keyword (extract reserved-keyword code)]
       ;;(= "symbol" reserved-keyword) [:symbol (extract reserved-keyword code)]

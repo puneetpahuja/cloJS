@@ -10,6 +10,9 @@
   (:gen-class))
 
 (comment TODO
+         * should return be explicit
+         * need a `var` for chaining
+         * need assignment
          * make get-const generic and make "const" as default value
          * give an option for running the generated js file
          * write basic test cases so that regression testing is easy
@@ -30,6 +33,8 @@
 (def js-generator-script-file "let fs = require (\"fs\"); let gen = require (\"escodegen\"); fs.writeFileSync(process.argv[2], gen.generate(JSON.parse(fs.readFileSync(process.argv[1], \"utf8\"))));")
 
 (def js-generator-script "let gen = require (\"escodegen\"); console.log(gen.generate(JSON.parse(process.argv[1])));")
+
+(programs node)
 
 (declare get-form get-return-form get-forms)
 
@@ -168,11 +173,26 @@
 (defn get-let [form]
   (assoc (get-const form) "kind" "let"))
 
-(defn get-fn-call [form]
+(defn get-fn-call-helper [operator operands]
   {"type" "CallExpression"
-   "callee" (get-identifier (operator form))
-   "arguments" (get-forms (operands form) :fn-call)})
+   "callee" (get-identifier operator)
+   "arguments" (get-forms operands :fn-call)})
 
+(defn clean [js-code-str]
+  (if (str/ends-with? js-code-str ";\n")
+    (subs js-code-str 0 (- (count js-code-str) (count ";\n")))
+    (subs js-code-str 0 (- (count js-code-str) (count "\n")))))
+
+(defn get-fn-call [form]
+  (let [operator (operator form)
+        operands (operands form)
+        first-operand (first operands)
+        first-operand-str (if (exp? first-operand)
+                            (clean (convert-form first-operand))
+                            first-operand)]
+    (if (str/starts-with? (str operator) ".")
+      (get-fn-call-helper (str first-operand-str operator) (rest operands))
+      (get-fn-call-helper operator operands))))
 
 (defn get-exp [form]
   {"type" "ExpressionStatement"
@@ -215,6 +235,7 @@
     (if? form)                 (get-if form)
     (do? form)                 (get-do form)
     (vec? form)                (get-vec form)
+    (return? form)             (get-return-form (first (operands form)) :defn)
     (lambda? form)             (get-lambda form)
     (map-ds? form)             (get-map-ds form)
     (literal? form)            (get-literal form)
@@ -235,13 +256,19 @@
 (defn get-ast [ast]
   (get-program (get-forms (:program ast) :program)))
 
+(defn convert-form [form]
+  (let  [js-ast (-> {:program [form]}
+                    get-ast
+                    jsonify)]
+    ;; (println js-ast)
+    (node "-e" js-generator-script js-ast)))
+
 (defn convert-string [code-str]
   (let  [js-ast (-> code-str
                     ast-gen/generate-string
                     get-ast
                     jsonify)]
     ;; (println js-ast)
-    (programs node)
     (node "-e" js-generator-script js-ast)))
 
 

@@ -40,8 +40,8 @@
 
 (def binary-operators #{'* '+ '- '/ 'mod
                         '<= '>= '< '>
-                        '= '!= '!== '== 
-                        'in 'instanceof})
+                        '= '!= '!== '==
+                        'in 'instanceof 'assign})
 
 (def logical-operators #{'and 'or})
 
@@ -69,7 +69,12 @@
 (defn operator? [form]
   (form-is? form [binary-operator? logical-operator? unary-operator?]))
 
-(def clojure->js-map {'= '=== 'mod '% 'and '&& 'or '|| 'not '!})
+(def clojure->js-map {'= '===
+                      'mod '%
+                      'and '&&
+                      'or '||
+                      'not '!
+                      'assign '=})
 
 (defn clojure->js [symbol]
   (get clojure->js-map symbol symbol))
@@ -78,3 +83,4 @@
   (json/write-str json-map))
 
 (def lambda? (partial exp-type? :fn))
+(def return? (partial exp-type? :return))
