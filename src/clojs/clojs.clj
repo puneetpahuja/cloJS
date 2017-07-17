@@ -183,6 +183,8 @@
     (subs js-code-str 0 (- (count js-code-str) (count ";\n")))
     (subs js-code-str 0 (- (count js-code-str) (count "\n")))))
 
+(declare convert-form)
+
 (defn get-fn-call [form]
   (let [operator (operator form)
         operands (operands form)
