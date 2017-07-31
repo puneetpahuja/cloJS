@@ -159,6 +159,7 @@ As Clojure uses prefix notation you can give any number of arguments to the oper
 | `(instanceof a b 1 1.2 c)` | `a instanceof b instanceof 1 instanceof 1.2 instanceof c` |
 | `(and a b 1 1.2 c)`        | `a && b && 1 && 1.2 && c`                |
 | `(or a b 1 1.2 c)`         | `a` &#124;&#124; `b` &#124;&#124; `1` &#124;&#124; `1.2` &#124;&#124; `c`                |
+| `(assign a b)`             | `a = b`       |
 
 #### Unary Operators
 
@@ -272,6 +273,26 @@ x => {
 };
 ```
 
+### `return` statement
+
+```clojure
+(return a)
+```
+->
+```javascript
+return a;
+```
+
+### `chaining`
+
+```clojure
+(.attr (.parent ($ this)) "id")
+```
+->
+```javascript
+$(this).parent().attr('id');
+```
+
 ### `cond` -> `if-else` chain
 
 ```clojure
@@ -342,7 +363,9 @@ mff(mvv, test);
 
 You can see a converted sample containing all the syntax: [`all.clj`](https://github.com/puneetpahuja/cloJS/blob/master/samples/all.clj) -> [`all.js`](https://github.com/puneetpahuja/cloJS/blob/master/samples/all.js) 
 
+## Examples 
 
+[A todo app written using cloJS.](https://github.com/puneetpahuja/todo_clojs)
 
 ## Components
 
