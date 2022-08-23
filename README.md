@@ -365,7 +365,7 @@ You can see a converted sample containing all the syntax: [`all.clj`](https://gi
 
 ## Examples 
 
-[A todo app written using cloJS.](https://github.com/puneetpahuja/todo_clojs)
+[A todo app written using cloJS.](https://github.com/puneetpahuja/todo-clojs)
 
 ## Components
 
