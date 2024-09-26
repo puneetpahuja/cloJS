@@ -73,7 +73,8 @@ Convert one or more files containing code with `convert`. It takes the path of e
 This will create `a.js`in the folder where `a.clj` is present and `b.js` in the `resources` folder where `b.clj` is present.
 **Note:** If `a.js` or `b.js` are already present in the respective folders, they will be overwritten.
 
-Here's a [sample Clojure app that uses clojs](https://github.com/puneetpahuja/using-clojs)
+Here's a [sample Clojure app that shows how to use cloJS](https://github.com/puneetpahuja/use-clojs)  
+And here's a [Todo app written in cloJS language](https://github.com/puneetpahuja/todo-clojs)
 
 ## Syntax
 Here is all the syntax that `clojs` supports:
