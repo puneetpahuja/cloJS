@@ -1,5 +1,5 @@
 # `cloJS` [![Clojars Project](https://img.shields.io/clojars/v/clojs.svg)](https://clojars.org/clojs)
-A library for Clojure to convert Clojure code to JavaScript. It combines the simplicity of Clojure syntax with the power of JavaScript libraries. So all the function calls are of JavaScript.
+A language that lets you write JavaScript code in Clojure syntax. It combines the simplicity of Clojure syntax with the power of JavaScript libraries. So all the function calls are of JavaScript.
 
 ## Artifacts
 `clojs` artifacts are [released to Clojars](https://clojars.org/clojs/clojs).
@@ -73,8 +73,10 @@ Convert one or more files containing code with `convert`. It takes the path of e
 This will create `a.js`in the folder where `a.clj` is present and `b.js` in the `resources` folder where `b.clj` is present.
 **Note:** If `a.js` or `b.js` are already present in the respective folders, they will be overwritten.
 
-Here's a [sample Clojure app that shows how to use cloJS](https://github.com/puneetpahuja/use-clojs)  
-And here's a [Todo app written in cloJS language](https://github.com/puneetpahuja/todo-clojs)
+Here's a [sample Clojure app that shows how to use cloJS](https://github.com/puneetpahuja/use-clojs)
+
+## Examples 
+[A todo app written in cloJS language.](https://github.com/puneetpahuja/todo-clojs)
 
 ## Syntax
 Here is all the syntax that `clojs` supports:
@@ -363,10 +365,6 @@ mff(mvv, test);
 ## Samples
 
 You can see a converted sample containing all the syntax: [`all.clj`](https://github.com/puneetpahuja/cloJS/blob/master/samples/all.clj) -> [`all.js`](https://github.com/puneetpahuja/cloJS/blob/master/samples/all.js) 
-
-## Examples 
-
-[A todo app written using cloJS.](https://github.com/puneetpahuja/todo-clojs)
 
 ## Components
 
