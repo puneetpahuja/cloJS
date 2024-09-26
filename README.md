@@ -1,6 +1,5 @@
 # `cloJS` [![Clojars Project](https://img.shields.io/clojars/v/clojs.svg)](https://clojars.org/clojs)
-A language that lets you write JavaScript code in Clojure syntax. It combines the simplicity of Clojure syntax with the power of JavaScript libraries. So all the function calls are of JavaScript.
-
+A language that lets you write JavaScript code in Clojure syntax. It combines the simplicity of Clojure syntax with the power of JavaScript libraries.
 ## Artifacts
 `clojs` artifacts are [released to Clojars](https://clojars.org/clojs/clojs).
 
